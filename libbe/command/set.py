@@ -148,7 +148,7 @@ own:
 
   active_status:
     - - unconfirmed
-      - A possible bug which lacks independent existance confirmation.
+      - A possible bug which lacks independent existence confirmation.
     - - open
       - A working bug that has not been assigned to a developer.
 

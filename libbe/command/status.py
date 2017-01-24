@@ -113,7 +113,7 @@ Active status levels are:
 Inactive status levels are:
   %s
 
-You can overide the list of allowed statuses on a per-repository
+You can override the list of allowed statuses on a per-repository
 basis.  See `be set --help` for details.
 """ % ('\n  '.join(active_statuses), '\n  '.join(inactive_statuses))
         return ret

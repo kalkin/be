@@ -67,7 +67,7 @@ severity_def = (
 # in order of increasing resolution
 # roughly following http://www.bugzilla.org/docs/3.2/en/html/lifecycle.html
 active_status_def = (
-  ("unconfirmed","A possible bug which lacks independent existance confirmation."),
+  ("unconfirmed","A possible bug which lacks independent existence confirmation."),
   ("open","A working bug that has not been assigned to a developer."),
   ("assigned","A working bug that has been assigned to a developer."),
   ("test","The code has been adjusted, but the fix is still being tested."))
