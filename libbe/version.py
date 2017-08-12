@@ -41,7 +41,7 @@ except ImportError as e:
         'committer': 'unknown',
         }
 
-# Manually set a version string (optional, defaults to bzr revision id)
+# Manually set a version string (optional, defaults to git revision id)
 #_VERSION = '1.2.3'
 
 def version(verbose=False):
