@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>", 
+
+
+
+
+
+
+    "reporter": "Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "Handle when uuid dir exists but has no value file", 
+
+
+
+
+
+
+    "time": "Mon, 25 Sep 2017 16:02:24 +0000"
+
+
+
+
+
+
+}
