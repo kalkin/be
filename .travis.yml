@@ -6,7 +6,11 @@ before_install:
     - sudo apt-get install mercurial darcs bzr
 
 install:
-  sudo pip install cherrypy jinja2
+  - sudo pip install cherrypy jinja2
+
+before_script:
+  - echo "[ui]\nusername = John Doe  <jon@exmple.com>" > $HOME/.hgrc
+  - cat $HOME/.hgrc
 
 script:
   - python test.py
