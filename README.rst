@@ -1,9 +1,11 @@
 Bugs Everywhere
 ===============
 
+|build-status|
+
 This is Bugs Everywhere (BE), a bugtracker built on distributed version
 control.  It works with Arch, Bazaar, Darcs, Git, Mercurial, and Monotone
-at the moment, but is easily extensible.  It can also function with no
+at the moment, but is easily extendable.  It can also function with no
 VCS at all.
 
 The idea is to package the bug information with the source code, so that
@@ -27,9 +29,9 @@ to build some auto-generated files (e.g. ``libbe/_version.py``), and::
 
     $ make install
 
-to install BE.  By default BE will install into your home directory,
-but you can tweak the ``INSTALL_OPTIONS`` variable in ``Makefile``
-to install to another location.
+to install BE.  By default BE will install into your home directory, but you can
+tweak the ``INSTALL_OPTIONS`` variable in ``Makefile`` to install to another
+location.
 
 .. _homepage: https://github.com/aaiyer/bugseverywhere
 
@@ -69,3 +71,8 @@ introduction to the syntax.
 .. _numpydoc: http://pypi.python.org/pypi/numpydoc
 .. _NumPy/SciPy documentation guide:
   https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
+
+.. |build-status| image:: https://img.shields.io/travis/kalkin/be.svg?style=flat
+    :alt: build status
+    :scale: 100%
+    :target: https://travis-ci.org/kalkin/be
