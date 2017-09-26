@@ -1,0 +1,12 @@
+language: python
+  - "2.7"
+dist: trusty
+
+before_install:
+    - sudo apt-get install mercurial darcs bzr
+
+install:
+  sudo pip install cherrypy jinja2
+
+script:
+  - python test.py
