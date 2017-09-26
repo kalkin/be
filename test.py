@@ -76,7 +76,7 @@ those modules and their submodules.  For example::
         if args == [] or 'libbe' in args or modname in args:
             if not modname.startswith("libbe.interfaces.web.cfbe")\
             and not modname.startswith('libbe.storage.vcs.arch')\
-            and not modname.startswith('libbe.storage.vcs.monotone'):
+            and not modname.startswith('libbe.storage.vcs.monotone')\
             and not modname.startswith('libbe.storage.vcs.pygit2'):
                 add_module_tests(suite, modname)
     
