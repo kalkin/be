@@ -77,7 +77,6 @@ those modules and their submodules.  For example::
             if not modname.startswith("libbe.interfaces.web.cfbe")\
             and not modname.startswith('libbe.storage.vcs.arch')\
             and not modname.startswith('libbe.storage.vcs.monotone'):
-                print(modname)
                 add_module_tests(suite, modname)
     
     result = unittest.TextTestRunner(verbosity=verbosity).run(suite)
