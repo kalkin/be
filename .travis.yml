@@ -11,6 +11,7 @@ install:
 before_script:
   - echo "[ui]\nusername = John Doe  <jon@exmple.com>" > $HOME/.hgrc
   - cat $HOME/.hgrc
+  - bzr whoami "Your Name <name@example.com>"
 
 script:
   - python test.py
