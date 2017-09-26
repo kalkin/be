@@ -1,0 +1,79 @@
+***********
+Data Format
+***********
+
+Bugdir
+======
+
+target
+  The current project development target.
+
+severities
+  The allowed bug severities and their descriptions.
+
+active_status
+  The allowed active bug states and their descriptions.
+
+inactive_status
+  The allowed inactive bug states and their descriptions.
+
+extra_strings
+  Space for an array of extra strings.  Useful for storing state for
+  functionality implemented purely in becommands/<some_function>.py.
+
+Bug
+===
+
+severity
+  A measure of the bug's importance
+
+status
+  The bug's current status
+
+creator
+  The user who entered the bug into the system
+
+reporter
+  The user who reported the bug
+
+time
+  An RFC 2822 timestamp for bug creation
+
+extra_strings
+  Space for an array of extra strings.  Useful for storing state for
+  functionality implemented purely in becommands/<some_function>.py.
+
+comment_root
+  The trunk of the comment tree.  We use a dummy root comment by default,
+  because there can be several comment threads rooted on the same parent bug.
+  To simplify comment interaction, we condense these threads into a single
+  thread with a Comment dummy root.
+
+Comment
+=======
+
+Alt-Id
+  Alternate ID for linking imported comments.  Internally comments are linked
+  (via In-reply-to) to the parent's UUID.  However, these UUIDs are generated
+  internally, so Alt-id is provided as a user-controlled linking target.
+
+Author
+ The author of the comment 
+
+In-reply-to
+  UUID for parent comment or bug
+
+Content-type
+  Mime type for comment body
+
+Date
+  An RFC 2822 timestamp for comment creation
+
+body
+  The meat of the comment
+
+extra_strings
+  Space for an array of extra strings.  Useful for storing state for
+  functionality implemented purely in becommands/<some_function>.py.
+
+# vim: ft=rst
