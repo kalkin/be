@@ -213,6 +213,7 @@ class BE (libbe.command.Command):
     subscribe
     tag
     target
+    web
       got callback
     """
     name = 'be'
