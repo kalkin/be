@@ -31,7 +31,7 @@ setup(
     license='GNU General Public License (GPL)',
     platforms=['all'],
     description='Bugtracker supporting distributed revision control',
-    long_description=open(os.path.join(_this_dir, 'README'), 'r').read(),
+    long_description=open(os.path.join(_this_dir, 'README.rst'), 'r').read(),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
