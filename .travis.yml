@@ -7,6 +7,10 @@ before_install:
 
 install:
   - sudo pip install cherrypy jinja2 scrutinizer-ocular
+  - wget http://www.monotone.ca/downloads/1.0/mtn-1.0-linux-x86.bz2
+  - bzip2 -d mtn-1.0-linux-x86.bz2
+  - sudo mv mtn-1.0-linux-x86 /usr/bin/mtn
+  - sudo chmod +x /usr/bin/mtn
 
 before_script:
   - echo "[ui]" > $HOME/.hgrc
@@ -14,9 +18,7 @@ before_script:
   - bzr whoami "Your Name <name@example.com>"
 
 script:
-  - coverage run test.py
+  - PATH=$PATH:$HOME/bin coverage run test.py
 
 after_script:
-    # Report coverage results to codecov.io
-    # and export tox environment variables
     - ocular # Send reports to Scrutinizer
