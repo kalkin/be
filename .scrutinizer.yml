@@ -1,0 +1,19 @@
+checks:
+  python:
+    code_rating: true
+    duplicate_code: true
+  javascript: true
+build:
+  nodes:
+    analysis:
+      tests:
+        override:
+          -
+            command: pylint-run
+            use_website_config: true
+tools:
+  external_code_coverage: true
+filter:
+  excluded_paths:
+    - '*/test/*'
+    - '*.min.js'
