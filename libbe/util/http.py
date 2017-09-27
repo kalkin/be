@@ -18,10 +18,12 @@
 # For urllib2 information, see
 #   urllib2, from urllib2 - The Missing Manual
 #   http://www.voidspace.org.uk/python/articles/urllib2.shtml
-# 
+#
 # A dictionary of response codes is available in
 #   httplib.responses
 # but it is slow to load.
+
+""" Utility module for executing GET & POST HTTP methods """
 
 import urllib
 import urllib2
@@ -30,7 +32,6 @@ from libbe import TESTING
 
 if TESTING:
     import unittest
-
 
 HTTP_OK = 200
 HTTP_FOUND = 302
@@ -45,11 +46,11 @@ A BE-specific extension to the HTTP/1.1 protocol (See `RFC 2616`_).
 
 HTTP_VALID = [HTTP_OK, HTTP_FOUND, HTTP_TEMP_REDIRECT, HTTP_USER_ERROR]
 
-
 USER_AGENT = 'BE-agent'
 
 
-class HTTPError (Exception):
+class HTTPError(Exception):
+    """ HTTP Error Exception """
     def __init__(self, error=None, url=None, msg=None):
         Exception.__init__(self, msg)
         self.url = url
@@ -64,7 +65,7 @@ class HTTPError (Exception):
         return self.msg
 
 
-def get_post_url(url, get=True, data=None, data_dict=None, headers=[],
+def get_post_url(url, get=True, data=None, data_dict=None, headers=None,
                  agent=None):
     """Execute a GET or POST transaction.
 
@@ -84,6 +85,7 @@ def get_post_url(url, get=True, data=None, data_dict=None, headers=[],
     agent : str
       User agent string overriding the BE default.
     """
+    headers = headers or []
     if agent is None:
         agent = USER_AGENT
     if data is None:
@@ -127,19 +129,22 @@ def get_post_url(url, get=True, data=None, data_dict=None, headers=[],
 
 
 if TESTING:
-    class GetPostUrlTestCase (unittest.TestCase):
-        """Test cases for get_post_url()"""
+
+    class GetPostUrlTestCase(unittest.TestCase):
+        """Test cases for get_post_url()
+        """  # pylint: disable=missing-docstring
+
         def test_get(self):
-            url = 'http://bugseverywhere.org/'
-            page,final_url,info = get_post_url(url=url)
+            url = 'https://github.com/kalkin/be'
+            _, final_url, __ = get_post_url(url=url)
             self.failUnless(final_url == url,
-                'Redirect?\n  Expected: "{}"\n  Got:      "{}"'.format(
-                    url, final_url))
+                            'Redirect?\n  Expected: "{}"\n  Got:      "{}"'
+                            .format(url, final_url))
 
         def test_get_redirect(self):
-            url = 'http://physics.drexel.edu/~wking/code/be/redirect'
-            expected = 'http://physics.drexel.edu/~wking/'
-            page,final_url,info = get_post_url(url=url)
+            url = 'https://github.com/kalkin/be.git'
+            expected = 'https://github.com/kalkin/be'
+            _, final_url, __ = get_post_url(url=url)
             self.failUnless(final_url == expected,
-                'Redirect?\n  Expected: "{}"\n  Got:      "{}"'.format(
-                    expected, final_url))
+                            'Redirect?\n  Expected: "{}"\n  Got:      "{}"'
+                            .format(expected, final_url))
