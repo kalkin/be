@@ -6,7 +6,7 @@ before_install:
     - sudo apt-get install mercurial darcs bzr
 
 install:
-  - sudo pip install cherrypy jinja2 codecov
+  - sudo pip install cherrypy jinja2 codecov scrutinizer-ocular
 
 before_script:
   - echo "[ui]" > $HOME/.hgrc
@@ -20,3 +20,4 @@ after_script:
     # Report coverage results to codecov.io
     # and export tox environment variables
     - codecov --branch $TRAVIS_BRANCH
+    - ocular # Send reports to Scrutinizer
