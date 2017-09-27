@@ -44,6 +44,8 @@ from libbe.util.subproc import CommandError, invoke
 from libbe.util.plugin import import_by_name
 import libbe.storage.util.upgrade as upgrade
 
+from libbe.unidiff import PatchSet
+
 if libbe.TESTING == True:
     import unittest
     import doctest
@@ -496,13 +498,19 @@ class VCS (libbe.storage.base.VersionedStorage):
         """
         return None
 
+    def _diff(self, revision):
+        """ Return the output string of a vcs specific diff command """
+        raise NotImplementedError
+
     def _vcs_changed(self, revision):
         """
         Return a tuple of lists of ids
           (new, modified, removed)
         from the specified revision to the current situation.
         """
-        return ([], [], [])
+        output = self._diff(revision)
+        patch = PatchSet.from_string(output)
+        return patch.changed_files
 
     def version(self):
         # Cache version string for efficiency.

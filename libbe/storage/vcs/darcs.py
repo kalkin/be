@@ -209,8 +209,9 @@ class Darcs(base.VCS):
         if self.version_cmp(2, 3, 1) == 1:
             # Sun Nov 15 20:32:06 EST 2009  thomashartman1@gmail.com
             #   * add versioned show files functionality (darcs show files -p 'some patch')
-            status,output,error = self._u_invoke_client( \
-                'show', 'files', '--no-files', '--patch', revision)
+            _, output, __ = self._u_invoke_client(
+                'show', 'files', '--no-files', '--no-pending', '--patch',
+                revision)
             children = output.rstrip('\n').splitlines()
             rpath = '.'
             children = [self._u_rel_path(c, rpath) for c in children]
@@ -227,8 +228,8 @@ class Darcs(base.VCS):
             # Wed Dec  9 05:42:21 EST 2009  Luca Molteni <volothamp@gmail.com>
             #   * resolve issue835 show file with file directory arguments
             path = path.rstrip(os.path.sep)
-            status,output,error = self._u_invoke_client( \
-                'show', 'files', '--patch', revision, path)
+            _, output, __ = self._u_invoke_client(
+                'show', 'files', '--no-pending', '--patch', revision, path)
             files = output.rstrip('\n').splitlines()
             if path == '.':
                 descendents = [self._u_rel_path(f, path) for f in files
@@ -246,11 +247,12 @@ class Darcs(base.VCS):
         if id == None or '@' not in id:
             id = '%s <%s@invalid.com>' % (id, id)
         args = ['record', '--all', '--author', id, '--logfile', commitfile]
-        status,output,error = self._u_invoke_client(*args)
+        kwargs = {'expect':(0, 1)}
+        _, output, error = self._u_invoke_client(*args, **kwargs)
         empty_strings = ['No changes!']
         # work around http://mercurial.selenic.com/bts/issue618
-        if self._u_any_in_string(empty_strings, output) == True \
-                and len(self.__updated) > 0:
+        if self._u_any_in_string(empty_strings, output) \
+        and len(self.__updated) > 0:
             time.sleep(1)
             for path in self.__updated:
                 os.utime(os.path.join(self.repo, path), None)
@@ -314,94 +316,6 @@ class Darcs(base.VCS):
         status,output,error = self._u_invoke_client(
             *args, **kwargs)
         return output
-
-    def _parse_diff(self, diff_text):
-        """_parse_diff(diff_text) -> (new,modified,removed)
-
-        `new`, `modified`, and `removed` are lists of files.
-
-        Example diff text::
-
-          Mon Jan 18 15:19:30 EST 2010  None <None@invalid.com>
-            * Final state
-          diff -rN --unified old-BEtestgQtDuD/.be/dir/bugs/modified new-BEtestgQtDuD/.be/dir/bugs/modified
-          --- old-BEtestgQtDuD/.be/dir/bugs/modified      2010-01-18 15:19:30.000000000 -0500
-          +++ new-BEtestgQtDuD/.be/dir/bugs/modified      2010-01-18 15:19:30.000000000 -0500
-          @@ -1 +1 @@
-          -some value to be modified
-          \ No newline at end of file
-          +a new value
-          \ No newline at end of file
-          diff -rN --unified old-BEtestgQtDuD/.be/dir/bugs/moved new-BEtestgQtDuD/.be/dir/bugs/moved
-          --- old-BEtestgQtDuD/.be/dir/bugs/moved 2010-01-18 15:19:30.000000000 -0500
-          +++ new-BEtestgQtDuD/.be/dir/bugs/moved 1969-12-31 19:00:00.000000000 -0500
-          @@ -1 +0,0 @@
-          -this entry will be moved
-          \ No newline at end of file
-          diff -rN --unified old-BEtestgQtDuD/.be/dir/bugs/moved2 new-BEtestgQtDuD/.be/dir/bugs/moved2
-          --- old-BEtestgQtDuD/.be/dir/bugs/moved2        1969-12-31 19:00:00.000000000 -0500
-          +++ new-BEtestgQtDuD/.be/dir/bugs/moved2        2010-01-18 15:19:30.000000000 -0500
-          @@ -0,0 +1 @@
-          +this entry will be moved
-          \ No newline at end of file
-          diff -rN --unified old-BEtestgQtDuD/.be/dir/bugs/new new-BEtestgQtDuD/.be/dir/bugs/new
-          --- old-BEtestgQtDuD/.be/dir/bugs/new   1969-12-31 19:00:00.000000000 -0500
-          +++ new-BEtestgQtDuD/.be/dir/bugs/new   2010-01-18 15:19:30.000000000 -0500
-          @@ -0,0 +1 @@
-          +this entry is new
-          \ No newline at end of file
-          diff -rN --unified old-BEtestgQtDuD/.be/dir/bugs/removed new-BEtestgQtDuD/.be/dir/bugs/removed
-          --- old-BEtestgQtDuD/.be/dir/bugs/removed       2010-01-18 15:19:30.000000000 -0500
-          +++ new-BEtestgQtDuD/.be/dir/bugs/removed       1969-12-31 19:00:00.000000000 -0500
-          @@ -1 +0,0 @@
-          -this entry will be deleted
-          \ No newline at end of file
-          
-        """
-        new = []
-        modified = []
-        removed = []
-        lines = diff_text.splitlines()
-        repodir = os.path.basename(self.repo) + os.path.sep
-        i = 0
-        while i < len(lines):
-            line = lines[i]; i += 1
-            if not line.startswith('diff '):
-                continue
-            file_a,file_b = line.split()[-2:]
-            assert file_a.startswith('old-'), \
-                'missformed file_a %s' % file_a
-            assert file_b.startswith('new-'), \
-                'missformed file_a %s' % file_b
-            file = file_a[4:]
-            assert file_b[4:] == file, \
-                'diff file missmatch %s != %s' % (file_a, file_b)
-            assert file.startswith(repodir), \
-                'missformed file_a %s' % file_a
-            file = file[len(repodir):]
-            lines_added = 0
-            lines_removed = 0
-            line = lines[i]; i += 1
-            assert line.startswith('--- old-'), \
-                'missformed "---" line %s' % line
-            time_a = line.split('\t')[1]
-            line = lines[i]; i += 1
-            assert line.startswith('+++ new-'), \
-                'missformed "+++" line %s' % line
-            time_b = line.split('\t')[1]
-            zero_time = time.strftime('%Y-%m-%d %H:%M:%S.000000000 ',
-                                      time.localtime(0))
-            # note that zero_time is missing the trailing timezone offset
-            if time_a.startswith(zero_time):
-                new.append(file)
-            elif time_b.startswith(zero_time):
-                removed.append(file)
-            else:
-                modified.append(file)
-        return (new,modified,removed)
-
-    def _vcs_changed(self, revision):
-        return self._parse_diff(self._diff(revision))
 
 
 if libbe.TESTING == True:

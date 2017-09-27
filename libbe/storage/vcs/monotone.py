@@ -304,69 +304,6 @@ class Monotone (base.VCS):
         status,output,error = self._invoke_client('-r', revision, 'diff')
         return output
 
-    def _parse_diff(self, diff_text):
-        """_parse_diff(diff_text) -> (new,modified,removed)
-
-        `new`, `modified`, and `removed` are lists of files.
-
-        Example diff text::
-
-          #
-          # old_revision [1ce9ac2cfe3166b8ad23a60555f8a70f37686c25]
-          #
-          # delete ".be/dir/bugs/moved"
-          # 
-          # delete ".be/dir/bugs/removed"
-          # 
-          # add_file ".be/dir/bugs/moved2"
-          #  content [33e4510df9abef16dad7c65c0775e74602cc5005]
-          # 
-          # add_file ".be/dir/bugs/new"
-          #  content [45c45b5630f7446f83b0e14ee1525e449a06131c]
-          # 
-          # patch ".be/dir/bugs/modified"
-          #  from [809bf3b80423c361849386008a0ce01199d30929]
-          #    to [f13d3ec08972e2b41afecd9a90d4bc71cdcea338]
-          #
-          ============================================================
-          --- .be/dir/bugs/moved2 33e4510df9abef16dad7c65c0775e74602cc5005
-          +++ .be/dir/bugs/moved2 33e4510df9abef16dad7c65c0775e74602cc5005
-          @@ -0,0 +1 @@
-          +this entry will be moved
-          \ No newline at end of file
-          ============================================================
-          --- .be/dir/bugs/new    45c45b5630f7446f83b0e14ee1525e449a06131c
-          +++ .be/dir/bugs/new    45c45b5630f7446f83b0e14ee1525e449a06131c
-          @@ -0,0 +1 @@
-          +this entry is new
-          \ No newline at end of file
-          ============================================================
-          --- .be/dir/bugs/modified       809bf3b80423c361849386008a0ce01199d30929
-          +++ .be/dir/bugs/modified       f13d3ec08972e2b41afecd9a90d4bc71cdcea338
-          @@ -1 +1 @@
-          -some value to be modified
-          \ No newline at end of file
-          +a new value
-          \ No newline at end of file
-        """
-        new = []
-        modified = []
-        removed = []
-        lines = diff_text.splitlines()
-        for i,line in enumerate(lines):
-            if line.startswith('# add_file "'):
-                new.append(line[len('# add_file "'):-1])
-            elif line.startswith('# patch "'):
-                modified.append(line[len('# patch "'):-1])
-            elif line.startswith('# delete "'):
-                removed.append(line[len('# delete "'):-1])
-            elif not line.startswith('#'):
-                break
-        return (new,modified,removed)
-
-    def _vcs_changed(self, revision):
-        return self._parse_diff(self._diff(revision))
-
 
 if libbe.TESTING == True:
     base.make_vcs_testcase_subclasses(Monotone, sys.modules[__name__])
