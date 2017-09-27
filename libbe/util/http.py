@@ -23,6 +23,8 @@
 #   httplib.responses
 # but it is slow to load.
 
+""" Utility module for executing GET & POST HTTP methods """
+
 import urllib
 import urllib2
 
@@ -48,6 +50,7 @@ USER_AGENT = 'BE-agent'
 
 
 class HTTPError(Exception):
+    """ HTTP Error Exception """
     def __init__(self, error=None, url=None, msg=None):
         Exception.__init__(self, msg)
         self.url = url
@@ -128,7 +131,8 @@ def get_post_url(url, get=True, data=None, data_dict=None, headers=None,
 if TESTING:
 
     class GetPostUrlTestCase(unittest.TestCase):
-        """Test cases for get_post_url()"""
+        """Test cases for get_post_url()
+        """  # pylint: disable=missing-docstring
 
         def test_get(self):
             url = 'https://github.com/kalkin/be'
