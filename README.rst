@@ -4,7 +4,7 @@ Bugs Everywhere
 |build-status| |read-the-docs| |codecov|
 
 This is Bugs Everywhere (BE), a bugtracker built on distributed version
-control.  It works with Arch, Bazaar, Darcs, Git, Mercurial, and Monotone
+control.  It works with Bazaar, Darcs, Git, Mercurial, and Monotone
 at the moment, but is easily extendable.  It can also function with no
 VCS at all.
 

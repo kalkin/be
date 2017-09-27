@@ -6,7 +6,6 @@ control.  It works with Arch_, Bazaar_, Darcs_, Git_, Mercurial_, and
 Monotone_ at the moment, but is easily extensible.  It can also
 function with no VCS at all.
 
-.. _Arch: http://www.gnu.org/software/gnu-arch/
 .. _Bazaar: http://bazaar.canonical.com/
 .. _Darcs: http://darcs.net/
 .. _Git: http://git-scm.com/
