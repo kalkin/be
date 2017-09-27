@@ -209,8 +209,9 @@ class Darcs(base.VCS):
         if self.version_cmp(2, 3, 1) == 1:
             # Sun Nov 15 20:32:06 EST 2009  thomashartman1@gmail.com
             #   * add versioned show files functionality (darcs show files -p 'some patch')
-            status,output,error = self._u_invoke_client( \
-                'show', 'files', '--no-files', '--patch', revision)
+            _, output, __ = self._u_invoke_client(
+                'show', 'files', '--no-files', '--no-pending', '--patch',
+                revision)
             children = output.rstrip('\n').splitlines()
             rpath = '.'
             children = [self._u_rel_path(c, rpath) for c in children]
@@ -227,8 +228,8 @@ class Darcs(base.VCS):
             # Wed Dec  9 05:42:21 EST 2009  Luca Molteni <volothamp@gmail.com>
             #   * resolve issue835 show file with file directory arguments
             path = path.rstrip(os.path.sep)
-            status,output,error = self._u_invoke_client( \
-                'show', 'files', '--patch', revision, path)
+            _, output, __ = self._u_invoke_client(
+                'show', 'files', '--no-pending', '--patch', revision, path)
             files = output.rstrip('\n').splitlines()
             if path == '.':
                 descendents = [self._u_rel_path(f, path) for f in files
