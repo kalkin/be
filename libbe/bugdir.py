@@ -770,107 +770,6 @@ if libbe.TESTING == True:
                 self.storage.connect()
                 self._clear_bugs()
 
-#    class BugDirTestCase(unittest.TestCase):
-#        def setUp(self):
-#            self.dir = utility.Dir()
-#            self.bugdir = BugDir(self.dir.path, sink_to_existing_root=False,
-#                                 allow_storage_init=True)
-#            self.storage = self.bugdir.storage
-#        def tearDown(self):
-#            self.bugdir.cleanup()
-#            self.dir.cleanup()
-#        def fullPath(self, path):
-#            return os.path.join(self.dir.path, path)
-#        def assertPathExists(self, path):
-#            fullpath = self.fullPath(path)
-#            self.failUnless(os.path.exists(fullpath)==True,
-#                            "path %s does not exist" % fullpath)
-#            self.assertRaises(AlreadyInitialized, BugDir,
-#                              self.dir.path, assertNewBugDir=True)
-#        def versionTest(self):
-#            if self.storage != None and self.storage.versioned == False:
-#                return
-#            original = self.bugdir.storage.commit("Began versioning")
-#            bugA = self.bugdir.bug_from_uuid("a")
-#            bugA.status = "fixed"
-#            self.bugdir.save()
-#            new = self.storage.commit("Fixed bug a")
-#            dupdir = self.bugdir.duplicate_bugdir(original)
-#            self.failUnless(dupdir.root != self.bugdir.root,
-#                            "%s, %s" % (dupdir.root, self.bugdir.root))
-#            bugAorig = dupdir.bug_from_uuid("a")
-#            self.failUnless(bugA != bugAorig,
-#                            "\n%s\n%s" % (bugA.string(), bugAorig.string()))
-#            bugAorig.status = "fixed"
-#            self.failUnless(bug.cmp_status(bugA, bugAorig)==0,
-#                            "%s, %s" % (bugA.status, bugAorig.status))
-#            self.failUnless(bug.cmp_severity(bugA, bugAorig)==0,
-#                            "%s, %s" % (bugA.severity, bugAorig.severity))
-#            self.failUnless(bug.cmp_assigned(bugA, bugAorig)==0,
-#                            "%s, %s" % (bugA.assigned, bugAorig.assigned))
-#            self.failUnless(bug.cmp_time(bugA, bugAorig)==0,
-#                            "%s, %s" % (bugA.time, bugAorig.time))
-#            self.failUnless(bug.cmp_creator(bugA, bugAorig)==0,
-#                            "%s, %s" % (bugA.creator, bugAorig.creator))
-#            self.failUnless(bugA == bugAorig,
-#                            "\n%s\n%s" % (bugA.string(), bugAorig.string()))
-#            self.bugdir.remove_duplicate_bugdir()
-#            self.failUnless(os.path.exists(dupdir.root)==False,
-#                            str(dupdir.root))
-#        def testRun(self):
-#            self.bugdir.new_bug(uuid="a", summary="Ant")
-#            self.bugdir.new_bug(uuid="b", summary="Cockroach")
-#            self.bugdir.new_bug(uuid="c", summary="Praying mantis")
-#            length = len(self.bugdir)
-#            self.failUnless(length == 3, "%d != 3 bugs" % length)
-#            uuids = list(self.bugdir.uuids())
-#            self.failUnless(len(uuids) == 3, "%d != 3 uuids" % len(uuids))
-#            self.failUnless(uuids == ["a","b","c"], str(uuids))
-#            bugA = self.bugdir.bug_from_uuid("a")
-#            bugAprime = self.bugdir.bug_from_shortname("a")
-#            self.failUnless(bugA == bugAprime, "%s != %s" % (bugA, bugAprime))
-#            self.bugdir.save()
-#            self.versionTest()
-#        def testComments(self, sync_with_disk=False):
-#            if sync_with_disk == True:
-#                self.bugdir.set_sync_with_disk(True)
-#            self.bugdir.new_bug(uuid="a", summary="Ant")
-#            bug = self.bugdir.bug_from_uuid("a")
-#            comm = bug.comment_root
-#            rep = comm.new_reply("Ants are small.")
-#            rep.new_reply("And they have six legs.")
-#            if sync_with_disk == False:
-#                self.bugdir.save()
-#                self.bugdir.set_sync_with_disk(True)
-#            self.bugdir._clear_bugs()
-#            bug = self.bugdir.bug_from_uuid("a")
-#            bug.load_comments()
-#            if sync_with_disk == False:
-#                self.bugdir.set_sync_with_disk(False)
-#            self.failUnless(len(bug.comment_root)==1, len(bug.comment_root))
-#            for index,comment in enumerate(bug.comments()):
-#                if index == 0:
-#                    repLoaded = comment
-#                    self.failUnless(repLoaded.uuid == rep.uuid, repLoaded.uuid)
-#                    self.failUnless(comment.sync_with_disk == sync_with_disk,
-#                                    comment.sync_with_disk)
-#                    self.failUnless(comment.content_type == "text/plain",
-#                                    comment.content_type)
-#                    self.failUnless(repLoaded.settings["Content-type"] == \
-#                                        "text/plain",
-#                                    repLoaded.settings)
-#                    self.failUnless(repLoaded.body == "Ants are small.",
-#                                    repLoaded.body)
-#                elif index == 1:
-#                    self.failUnless(comment.in_reply_to == repLoaded.uuid,
-#                                    repLoaded.uuid)
-#                    self.failUnless(comment.body == "And they have six legs.",
-#                                    comment.body)
-#                else:
-#                    self.failIf(True,
-#                                "Invalid comment: %d\n%s" % (index, comment))
-#        def testSyncedComments(self):
-#            self.testComments(sync_with_disk=True)
 
     class SimpleBugDirTestCase (unittest.TestCase):
         def setUp(self):
@@ -928,29 +827,6 @@ if libbe.TESTING == True:
             self.failUnless(uuids == [], uuids)
             bugdir.cleanup()
 
+
     unitsuite =unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
     suite = unittest.TestSuite([unitsuite, doctest.DocTestSuite()])
-
-#    def _get_settings(self, settings_path, for_duplicate_bugdir=False):
-#        allow_no_storage = not self.storage.path_in_root(settings_path)
-#        if allow_no_storage == True:
-#            assert for_duplicate_bugdir == True
-#        if self.sync_with_disk == False and for_duplicate_bugdir == False:
-#            # duplicates can ignore this bugdir's .sync_with_disk status
-#            raise DiskAccessRequired("_get settings")
-#        try:
-#            settings = mapfile.map_load(self.storage, settings_path, allow_no_storage)
-#        except storage.NoSuchFile:
-#            settings = {"storage_name": "None"}
-#        return settings
-
-#    def _save_settings(self, settings_path, settings,
-#                       for_duplicate_bugdir=False):
-#        allow_no_storage = not self.storage.path_in_root(settings_path)
-#        if allow_no_storage == True:
-#            assert for_duplicate_bugdir == True
-#        if self.sync_with_disk == False and for_duplicate_bugdir == False:
-#            # duplicates can ignore this bugdir's .sync_with_disk status
-#            raise DiskAccessRequired("_save settings")
-#        self.storage.mkdir(self.get_path(), allow_no_storage)
-#        mapfile.map_save(self.storage, settings_path, settings, allow_no_storage)
