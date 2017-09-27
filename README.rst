@@ -18,9 +18,9 @@ Getting BE
 
 BE is available as a Git repository::
 
-    $ git clone https://github.com/aaiyer/bugseverywhere.git be
+    $ git clone https://github.com/kalkin/be.git be
 
-See the homepage_ for details.  If you do branch the Git repo, you'll
+See the documentation_ for details.  If you clone the Git repo, you'll
 need to run::
 
     $ make
@@ -33,7 +33,7 @@ to install BE.  By default BE will install into your home directory, but you can
 tweak the ``INSTALL_OPTIONS`` variable in ``Makefile`` to install to another
 location.
 
-.. _homepage: https://github.com/aaiyer/bugseverywhere
+.. _documentation: http://bugs-everywhere.readthedocs.io/en/master
 
 
 Getting started
@@ -80,7 +80,7 @@ introduction to the syntax.
 .. |read-the-docs| image:: https://readthedocs.org/projects/bugs-everywhere/badge/?version=master
     :alt: Doc Build Status
     :scale: 100%
-    :target: http://bugs-everywhere.readthedocs.io/en/master
+    :target: documentation_
 
 .. |codecov| image:: https://codecov.io/gh/kalkin/be/branch/master/graph/badge.svg
     :alt: Code Coverage Status
