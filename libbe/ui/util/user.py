@@ -18,9 +18,7 @@
 
 """Tools for getting, setting, creating, and parsing the user's ID.
 
-IDs will look like 'John Doe <jdoe@example.com>'.  Note that the
-:py:mod:`libbe.storage.vcs.arch <Arch VCS backend>` *enforces* IDs with
-this format.
+IDs will look like 'John Doe <jdoe@example.com>'.
 
 Do not confuse the user IDs discussed in this module, which refer to
 humans, with the "user IDs" discussed in :py:mod:`libbe.util.id`, which

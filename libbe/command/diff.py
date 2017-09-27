@@ -138,8 +138,6 @@ tree, and prints a pretty report.  If REVISION is given, it is a
 specifier for the particular previous tree to use.  Specifiers are
 specific to their storage backend.
 
-For Arch your specifier must be a fully-qualified revision name.
-
 Besides the standard summary output, you can use the options to output
 UUIDS for the different categories.  This output can be used as the
 input to 'be show' to get an understanding of the current status.
