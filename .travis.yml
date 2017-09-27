@@ -9,8 +9,8 @@ install:
   - sudo pip install cherrypy jinja2
 
 before_script:
-  - echo "[ui]\nusername = John Doe  <jon@exmple.com>" > $HOME/.hgrc
-  - cat $HOME/.hgrc
+  - echo "[ui]" > $HOME/.hgrc
+  - echo "username = John Doe  <jon@exmple.com>" >> $HOME/.hgrc
   - bzr whoami "Your Name <name@example.com>"
 
 script:
