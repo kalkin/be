@@ -23,7 +23,6 @@
 There is a base class (:py:class:`~libbe.storage.vcs.VCS`) translating 
 Storage language to VCS language, and a number of `VCS` implementations:
 
-* :py:class:`~libbe.storage.vcs.arch.Arch`
 * :py:class:`~libbe.storage.vcs.bzr.Bzr`
 * :py:class:`~libbe.storage.vcs.darcs.Darcs`
 * :py:class:`~libbe.storage.vcs.git.Git`

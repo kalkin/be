@@ -356,7 +356,6 @@ class VCS (libbe.storage.base.VersionedStorage):
             kwargs['encoding'] = libbe.util.encoding.get_text_file_encoding()
         libbe.storage.base.VersionedStorage.__init__(self, *args, **kwargs)
         self.versioned = False
-        self.interspersed_vcs_files = False
         self._cached_path_id = CachedPathID()
         self._rooted = False
 
@@ -429,18 +428,6 @@ class VCS (libbe.storage.base.VersionedStorage):
         at path.
         """
         pass
-
-    def _vcs_is_versioned(self, path):
-        """
-        Return true if a path is under version control, False
-        otherwise.  You only need to set this if the VCS goes about
-        dumping VCS-specific files into the .be directory.
-
-        If you do need to implement this method (e.g. Arch), set
-          self.interspersed_vcs_files = True
-        """
-        assert self.interspersed_vcs_files == False
-        raise NotImplementedError
 
     def _vcs_get_file_contents(self, path, revision=None):
         """
@@ -825,18 +812,10 @@ class VCS (libbe.storage.base.VersionedStorage):
                                  listdir(os.path.join(path, c))])
             elif c in ['id-cache', 'version']:
                 children[i] = None
-            elif self.interspersed_vcs_files \
-                    and self._vcs_is_versioned(c) == False:
-                children[i] = None
         for i,c in enumerate(children):
             if c == None: continue
             cpath = os.path.join(path, c)
-            if self.interspersed_vcs_files == True \
-                    and revision != None \
-                    and self._vcs_is_versioned(cpath) == False:
-                children[i] = None
-            else:
-                children[i] = self._u_path_to_id(cpath)
+            children[i] = self._u_path_to_id(cpath)
         return [c for c in children if c != None]
 
     def _get(self, id, default=libbe.util.InvalidObject, revision=None):
