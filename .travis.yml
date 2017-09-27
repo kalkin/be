@@ -19,4 +19,4 @@ script:
 after_script:
     # Report coverage results to codecov.io
     # and export tox environment variables
-    - codecov
+    - codecov --branch $TRAVIS_BRANCH

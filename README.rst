@@ -1,7 +1,7 @@
 Bugs Everywhere
 ===============
 
-|build-status| |read-the-docs|
+|build-status| |read-the-docs| |codecov|
 
 This is Bugs Everywhere (BE), a bugtracker built on distributed version
 control.  It works with Arch, Bazaar, Darcs, Git, Mercurial, and Monotone
@@ -81,3 +81,8 @@ introduction to the syntax.
     :alt: Doc Build Status
     :scale: 100%
     :target: http://bugs-everywhere.readthedocs.io/en/master
+
+.. |codecov| image:: https://codecov.io/gh/kalkin/be/branch/master/graph/badge.svg
+    :alt: Code Coverage Status
+    :scale: 100%
+    :target: https://codecov.io/gh/kalkin/be
