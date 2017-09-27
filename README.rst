@@ -1,7 +1,7 @@
 Bugs Everywhere
 ===============
 
-|build-status| |read-the-docs| |codecov|
+|build-status| |read-the-docs| |coverage| |scrutinizer|
 
 This is Bugs Everywhere (BE), a bugtracker built on distributed version
 control.  It works with Bazaar, Darcs, Git, Mercurial, and Monotone
@@ -82,7 +82,10 @@ introduction to the syntax.
     :scale: 100%
     :target: documentation_
 
-.. |codecov| image:: https://codecov.io/gh/kalkin/be/branch/master/graph/badge.svg
-    :alt: Code Coverage Status
-    :scale: 100%
-    :target: https://codecov.io/gh/kalkin/be
+.. |scrutinizer| image:: https://scrutinizer-ci.com/g/kalkin/be/badges/quality-score.png?b=master
+   :target: https://scrutinizer-ci.com/g/kalkin/be/
+   :alt: scrutinizer-ci.com
+
+.. |coverage| image:: https://scrutinizer-ci.com/g/kalkin/be/badges/coverage.png?b=master
+   :target: https://scrutinizer-ci.com/g/kalkin/be/
+   :alt: scrutinizer-ci.com
