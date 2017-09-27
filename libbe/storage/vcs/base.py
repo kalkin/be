@@ -1108,8 +1108,8 @@ if libbe.TESTING == True:
         def test_installed(self):
             """See if the VCS is installed.
             """
-            self.failUnless(self.s.installed() == True,
-                            '%(name)s VCS not found' % vars(self.Class))
+            if not self.s.installed():
+                self.skipTest('%(name)s VCS not found' % vars(self.Class))
 
 
     class VCS_detection_TestCase (VCSTestCase):
