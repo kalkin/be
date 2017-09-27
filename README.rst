@@ -87,5 +87,5 @@ introduction to the syntax.
    :alt: scrutinizer-ci.com
 
 .. |coverage| image:: https://scrutinizer-ci.com/g/kalkin/be/badges/coverage.png?b=master
-   :target: https://scrutinizer-ci.com/g/kalkin/be/
+   :target: https://scrutinizer-ci.com/g/kalkin/be/?branch=master
    :alt: scrutinizer-ci.com
