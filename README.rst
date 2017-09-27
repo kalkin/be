@@ -1,7 +1,7 @@
 Bugs Everywhere
 ===============
 
-|build-status|
+|build-status| |read-the-docs|
 
 This is Bugs Everywhere (BE), a bugtracker built on distributed version
 control.  It works with Arch, Bazaar, Darcs, Git, Mercurial, and Monotone
@@ -76,3 +76,8 @@ introduction to the syntax.
     :alt: build status
     :scale: 100%
     :target: https://travis-ci.org/kalkin/be
+
+.. |read-the-docs| image:: https://readthedocs.org/projects/bugs-everywhere/badge/?version=master
+    :alt: Doc Build Status
+    :scale: 100%
+    :target: http://bugs-everywhere.readthedocs.io/en/master
