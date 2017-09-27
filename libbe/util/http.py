@@ -130,16 +130,16 @@ if TESTING:
     class GetPostUrlTestCase (unittest.TestCase):
         """Test cases for get_post_url()"""
         def test_get(self):
-            url = 'http://bugseverywhere.org/'
-            page,final_url,info = get_post_url(url=url)
+            url = 'https://github.com/kalkin/be'
+            _, final_url, __ = get_post_url(url=url)
             self.failUnless(final_url == url,
                 'Redirect?\n  Expected: "{}"\n  Got:      "{}"'.format(
                     url, final_url))
 
         def test_get_redirect(self):
-            url = 'http://physics.drexel.edu/~wking/code/be/redirect'
-            expected = 'http://physics.drexel.edu/~wking/'
-            page,final_url,info = get_post_url(url=url)
+            url = 'https://github.com/kalkin/be.git'
+            expected = 'https://github.com/kalkin/be'
+            _ ,final_url, __ = get_post_url(url=url)
             self.failUnless(final_url == expected,
                 'Redirect?\n  Expected: "{}"\n  Got:      "{}"'.format(
                     expected, final_url))
