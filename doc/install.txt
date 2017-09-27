@@ -5,33 +5,23 @@ Installing BE
 Distribution packages
 =====================
 
-Some distributions (Debian_ , Ubuntu_ , others?) package BE.  If
-you're running one of those distributions, you can install the package
-with your regular package manager.  For Debian, Ubuntu, and related
-distros, that's::
+Some distributions (Debian_ , Ubuntu_ , others?) package an old version of BE.
+If you're running one of those distributions, you can install the package with
+your regular package manager.  For Debian, Ubuntu, and related distros, that's::
 
     $ apt-get install bugs-everywhere
 
-However, the official packages can lag behind current development.
+While, the official packages are not based on this fork, they are compatible.
 
-If you're running Gentoo_, I've got a live ebuild in my overlay_ that
-installs the current version of BE from the Git source.
-
-Michel Alexandre Salim maintains a Fedora_ package.
-
-.. _Debian: http://packages.debian.org/sid/bugs-everywhere
-.. _Ubuntu: http://packages.ubuntu.com/lucid/bugs-everywhere
-.. _Gentoo: http://www.gentoo.org/
-.. _overlay: http://blog.tremily.us/posts/Gentoo_overlay/
-.. _Fedora: https://admin.fedoraproject.org/pkgdb/acls/name/be
+.. _Debian: https://packages.debian.org/stretch/bugs-everywhere
+.. _Ubuntu: https://packages.ubuntu.com/zesty/bugs-everywhere
 
 
 Dependencies
 ============
 
-If your distribution does not package BE, you'll have to install it
-yourself, along with its dependencies.  Not all of these are strictly
-required.  See `Minimal installs`_ for possible shortcuts.
+Not all of these dependencies are strictly required.  See `Minimal installs`_
+for possible shortcuts.
 
 ==============  =======================  ================  ===========================
 Package         Role                     Debian_           Gentoo_
@@ -40,14 +30,9 @@ PyYAML_         upgrade old BE storage   python-yaml       dev-python/pyyaml
 Jinja_          HTML templating          python-jinja2     dev-python/jinja
 CherryPy_       serve repos over HTTPS   python-cherrypy3  dev-python/cherrypy
 Sphinx_         see :doc:`doc`           python-sphinx     dev-python/sphinx
-numpydoc_       see :doc:`doc`                             dev-python/numpydoc [#npd]_
+numpydoc_       see :doc:`doc`           python-numpydoc   dev-python/numpydoc
 Docutils_       manpage generation       python-docutils   dev-python/docutils
 ==============  =======================  ================  ===========================
-
-.. [#npd] In the science_ overlay.
-
-.. Debian has a stale ITP for python-numpydoc http://bugs.debian.org/631877
-   which caused BE to be dropped  http://bugs.debian.org/609519
 
 .. _PyYAML: http://pyyaml.org/
 .. _Jinja: http://jinja.pocoo.org/
@@ -73,11 +58,10 @@ to build some auto-generated files (e.g. :py:mod:`libbe._version`), and::
 
     $ make install
 
-to install BE.  By default BE will install into your home directory,
-but you can tweak the ``INSTALL_OPTIONS`` variable in ``Makefile`` to
-install to another location.  With the default installation, you may
-need to add ``~/.local/bin/`` to your ``PATH`` so that your shell can
-find the installed ``be`` script.
+to install BE.  By default BE will install into your home directory, but you can
+tweak the ``INSTALL_OPTIONS`` variable in ``Makefile`` to install to another
+location.  With the default installation, you may need to add ``~/.local/bin/``
+to your ``PATH`` so that your shell can find the installed ``be`` script.
 
 Minimal installs
 ----------------
@@ -135,9 +119,9 @@ currently reading them.
 Release tarballs
 ================
 
-For those not interested in the cutting edge, or those who don't want
-to worry about installing Git, we'll `post release tarballs`_.  After
-you've downloaded the release tarball, unpack it with::
+For those not interested in the development version, or those who don't want to
+worry about installing Git, we'll `post release tarballs`_.  After you've
+downloaded the release tarball, unpack it with::
 
     $ tar -xzvf be-<VERSION>.tar.gz
 
@@ -146,4 +130,4 @@ And install it with:::
     $ cd be-<VERSION>
     $ make install
 
-.. _post release tarballs: http://download.bugseverywhere.org/releases/
+.. _post release tarballs: https://github.com/kalkin/be/releases
