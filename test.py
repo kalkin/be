@@ -22,17 +22,47 @@
 import doctest
 import os
 import os.path
-import pkgutil
 import sys
 import unittest
 
 import libbe
 libbe.TESTING = True
+from libbe.util.tree import Tree
+from libbe.util.plugin import import_by_name
 from libbe.version import version
+
+def python_tree(root_path='libbe', root_modname='libbe'):
+    tree = Tree()
+    tree.path = root_path
+    tree.parent = None
+    stack = [tree]
+    while len(stack) > 0:
+        f = stack.pop(0)
+        if f.path.endswith('.py'):
+            f.name = os.path.basename(f.path)[:-len('.py')]
+        elif os.path.isdir(f.path) \
+                and os.path.exists(os.path.join(f.path, '__init__.py')):
+            f.name = os.path.basename(f.path)
+            f.is_module = True
+            for child in os.listdir(f.path):
+                if child == '__init__.py':
+                    continue
+                c = Tree()
+                c.path = os.path.join(f.path, child)
+                c.parent = f
+                stack.append(c)
+        else:
+            continue
+        if f.parent == None:
+            f.modname = root_modname
+        else:
+            f.modname = f.parent.modname + '.' + f.name
+            f.parent.append(f)
+    return tree
 
 def add_module_tests(suite, modname):
     try:
-        mod = __import__(modname, fromlist="dummy")
+        mod = import_by_name(modname)
     except ValueError as e:
         sys.stderr.write('Failed to import "{}"\n'.format(modname))
         raise e
@@ -70,16 +100,20 @@ those modules and their submodules.  For example::
         verbosity = 1
 
     suite = unittest.TestSuite()
-    package = libbe
-    prefix = package.__name__ + "."
-
-    for _, modname, __ in pkgutil.walk_packages(package.__path__, prefix):
-        if args == [] or 'libbe' in args or modname in args:
-            if not modname.startswith("libbe.interfaces.web.cfbe")\
-            and not modname.startswith('libbe.storage.vcs.arch')\
-            and not modname.startswith('libbe.storage.vcs.monotone')\
-            and not modname.startswith('libbe.storage.vcs.pygit2'):
-                add_module_tests(suite, modname)
+    tree = python_tree()
+    if len(args) == 0:
+        for node in tree.traverse():
+            add_module_tests(suite, node.modname)
+    else:
+        added = []
+        for modname in args:
+            for node in tree.traverse():
+                if node.modname == modname:
+                    for n in node.traverse():
+                        if n.modname not in added:
+                            add_module_tests(suite, n.modname)
+                            added.append(n.modname)
+                    break
     
     result = unittest.TextTestRunner(verbosity=verbosity).run(suite)
     
