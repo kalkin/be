@@ -246,11 +246,12 @@ class Darcs(base.VCS):
         if id == None or '@' not in id:
             id = '%s <%s@invalid.com>' % (id, id)
         args = ['record', '--all', '--author', id, '--logfile', commitfile]
-        status,output,error = self._u_invoke_client(*args)
+        kwargs = {'expect':(0, 1)}
+        _, output, error = self._u_invoke_client(*args, **kwargs)
         empty_strings = ['No changes!']
         # work around http://mercurial.selenic.com/bts/issue618
-        if self._u_any_in_string(empty_strings, output) == True \
-                and len(self.__updated) > 0:
+        if self._u_any_in_string(empty_strings, output) \
+        and len(self.__updated) > 0:
             time.sleep(1)
             for path in self.__updated:
                 os.utime(os.path.join(self.repo, path), None)
