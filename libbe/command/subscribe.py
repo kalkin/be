@@ -18,7 +18,6 @@
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-import os
 
 import libbe
 import libbe.bug

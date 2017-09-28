@@ -45,7 +45,6 @@ except ImportError:
 
 import os
 import os.path
-import re
 import shutil
 import StringIO
 import sys

@@ -21,8 +21,6 @@
 Handle conversion between the various BE storage formats.
 """
 
-import codecs
-import json
 import os, os.path
 import sys
 import types

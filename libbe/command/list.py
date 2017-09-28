@@ -21,7 +21,6 @@
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
-import os
 import re
 
 import libbe

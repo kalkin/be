@@ -24,10 +24,6 @@
 """
 
 import copy
-import errno
-import os
-import os.path
-import time
 import types
 try: # import core module, Python >= 2.5
     from xml.etree import ElementTree
@@ -36,7 +32,6 @@ except ImportError: # look for non-core module
 import xml.sax.saxutils
 
 import libbe
-import libbe.storage as storage
 from libbe.storage.util.properties import Property, doc_property, \
     local_property, defaulting_property, checked_property, \
     fn_checked_property, cached_property, primed_property, \

@@ -24,9 +24,7 @@ The serialized "mapfiles" should be clear, flat-text strings, and allow
 easy merging of independent/conflicting changes.
 """
 
-import errno
 import json
-import os.path
 
 import libbe
 if libbe.TESTING == True:

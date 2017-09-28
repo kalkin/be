@@ -34,7 +34,6 @@ try:
     import pwd
 except ImportError:  # handle non-Unix systems
     pwd = None
-import re
 from socket import gethostname
 
 import libbe

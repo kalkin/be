@@ -23,8 +23,6 @@ See Also
 :py:mod:`libbe.storage.http` : the associated client
 """
 
-import logging
-import os.path
 
 import libbe
 import libbe.command
@@ -35,14 +33,10 @@ import libbe.util.wsgi
 import libbe.version
 
 if libbe.TESTING:
-    import copy
     import doctest
-    import StringIO
     import sys
     import unittest
-    import wsgiref.validate
     try:
-        import cherrypy.test.webtest
         cherrypy_test_webtest = True
     except ImportError:
         cherrypy_test_webtest = None

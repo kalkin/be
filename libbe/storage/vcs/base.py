@@ -394,20 +394,17 @@ class VCS (libbe.storage.base.VersionedStorage):
         """
         Begin versioning the tree based at path.
         """
-        pass
 
     def _vcs_destroy(self):
         """
         Remove any files used in versioning (e.g. whatever _vcs_init()
         created).
         """
-        pass
 
     def _vcs_add(self, path):
         """
         Add the already created file at path to version control.
         """
-        pass
 
     def _vcs_exists(self, path, revision=None):
         """
@@ -420,14 +417,12 @@ class VCS (libbe.storage.base.VersionedStorage):
         Remove the file at path from version control.  Optionally
         remove the file from the filesystem as well.
         """
-        pass
 
     def _vcs_update(self, path):
         """
         Notify the versioning system of changes to the versioned file
         at path.
         """
-        pass
 
     def _vcs_get_file_contents(self, path, revision=None):
         """

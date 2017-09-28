@@ -23,12 +23,6 @@ See Also
 :py:meth:`be-libbe.command.base.Command._run_remote` : the associated client
 """
 
-import logging
-import os.path
-import posixpath
-import re
-import urllib
-import wsgiref.simple_server
 
 import libbe
 import libbe.command
@@ -38,14 +32,10 @@ import libbe.util.wsgi
 import libbe.version
 
 if libbe.TESTING:
-    import copy
     import doctest
-    import StringIO
     import sys
     import unittest
-    import wsgiref.validate
     try:
-        import cherrypy.test.webtest
         cherrypy_test_webtest = True
     except ImportError:
         cherrypy_test_webtest = None

@@ -41,17 +41,14 @@ class _Token (object):
     We want values that only mean something to the `settings_object`
     module.
     """
-    pass
 
 class UNPRIMED (_Token):
     "Property has not been primed (loaded)."
-    pass
 
 class EMPTY (_Token):
     """Property has been primed but has no user-set value, so use
     default/generator value.
     """
-    pass
 
 
 def prop_save_settings(self, old, new):

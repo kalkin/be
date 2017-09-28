@@ -21,14 +21,11 @@
 # You should have received a copy of the GNU General Public License along with
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
-import codecs
 import email.utils
-import htmlentitydefs
 import itertools
 import os
 import os.path
 import re
-import string
 import time
 import xml.sax.saxutils
 

@@ -23,9 +23,6 @@
 """
 
 import base64
-import os
-import os.path
-import sys
 import time
 import types
 try:

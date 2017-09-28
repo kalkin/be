@@ -37,7 +37,6 @@ except ImportError:
     bzrlib = None
 import os
 import os.path
-import re
 import shutil
 import StringIO
 import sys

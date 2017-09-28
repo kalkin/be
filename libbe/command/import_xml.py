@@ -18,7 +18,6 @@
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-import os
 import sys
 try: # import core module, Python >= 2.5
     from xml.etree import ElementTree
@@ -37,7 +36,6 @@ import libbe.util.utility
 
 if libbe.TESTING == True:
     import doctest
-    import StringIO
     import unittest
 
     import libbe.bugdir

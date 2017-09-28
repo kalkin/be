@@ -38,7 +38,6 @@ import tempfile
 import types
 
 try:
-    from email import Message
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
     from email.mime.application import MIMEApplication
@@ -48,7 +47,6 @@ try:
     from email.utils import getaddress
 except ImportError:
     # adjust to old python 2.4
-    from email import Message
     from email.MIMEText import MIMEText
     from email.MIMEMultipart import MIMEMultipart
     from email.MIMENonMultipart import MIMENonMultipart

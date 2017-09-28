@@ -25,10 +25,6 @@
 """
 
 import copy
-import os
-import os.path
-import errno
-import sys
 import time
 import types
 try: # import core module, Python >= 2.5

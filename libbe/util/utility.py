@@ -23,7 +23,6 @@ Assorted utility functions that don't fit in anywhere else.
 """
 
 import calendar
-import codecs
 import os
 import shutil
 import tempfile

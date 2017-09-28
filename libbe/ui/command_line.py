@@ -21,7 +21,6 @@ A command line interface to Bugs Everywhere.
 """
 
 import optparse
-import os
 import sys
 import locale
 
@@ -38,7 +37,7 @@ import libbe.util.http
 
 
 if libbe.TESTING == True:
-    import doctest
+    pass
 
 class CallbackExit (Exception):
     pass

@@ -36,7 +36,6 @@ import libbe.util.plugin
 
 class UserError (Exception):
     "An error due to improper BE usage."
-    pass
 
 
 class UsageError (UserError):

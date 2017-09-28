@@ -88,7 +88,6 @@ class EmptyCommit(Exception):
 
 class _EMPTY (object):
     """Entry has been added but has no user-set value."""
-    pass
 
 class Entry (Tree):
     def __init__(self, id, value=_EMPTY, parent=None, directory=False,

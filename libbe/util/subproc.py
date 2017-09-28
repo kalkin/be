@@ -33,8 +33,7 @@ _MSWINDOWS = sys.platform == 'win32'
 _POSIX = not _MSWINDOWS
 
 if _POSIX == True:
-    import os
-    import select
+    pass
 
 class CommandError(Exception):
     def __init__(self, command, status, stdout=None, stderr=None):

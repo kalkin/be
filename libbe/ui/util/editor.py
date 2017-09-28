@@ -23,10 +23,7 @@ Define editor_string(), a function that invokes an editor to accept
 user-produced text as a string.
 """
 
-import codecs
-import locale
 import os
-import sys
 import tempfile
 
 import libbe

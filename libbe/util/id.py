@@ -70,7 +70,6 @@ caching global comment-lookup tables and enables easy error messages
 ``bea`` bug directory is located").
 """
 
-import os.path
 import re
 
 import libbe
@@ -89,7 +88,6 @@ try:
         assert idstr.startswith(start)
         return idstr[len(start):]
 except ImportError:
-    import os
     import sys
     from subprocess import Popen, PIPE
 
