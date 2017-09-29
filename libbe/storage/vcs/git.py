@@ -42,6 +42,7 @@ else:
             'pygit2 <= 0.17.3 not supported')
 
 import libbe
+from libbe.unidiff import PatchSet
 from ...ui.util import user as _user
 from ...util import encoding as _encoding
 from ..base import EmptyCommit as _EmptyCommit
@@ -414,88 +415,18 @@ class ExecGit (PygitGit):
             return None
 
     def _diff(self, revision):
-        status,output,error = self._u_invoke_client('diff', revision)
+        _, output, __ = self._u_invoke_client('diff', revision)
         return output
 
-    def _parse_diff(self, diff_text):
-        """_parse_diff(diff_text) -> (new,modified,removed)
-
-        `new`, `modified`, and `removed` are lists of files.
-
-        Example diff text::
-
-          diff --git a/dir/changed b/dir/changed
-          index 6c3ea8c..2f2f7c7 100644
-          --- a/dir/changed
-          +++ b/dir/changed
-          @@ -1,3 +1,3 @@
-           hi
-          -there
-          +everyone and
-           joe
-          diff --git a/dir/deleted b/dir/deleted
-          deleted file mode 100644
-          index 225ec04..0000000
-          --- a/dir/deleted
-          +++ /dev/null
-          @@ -1,3 +0,0 @@
-          -in
-          -the
-          -beginning
-          diff --git a/dir/moved b/dir/moved
-          deleted file mode 100644
-          index 5ef102f..0000000
-          --- a/dir/moved
-          +++ /dev/null
-          @@ -1,4 +0,0 @@
-          -the
-          -ants
-          -go
-          -marching
-          diff --git a/dir/moved2 b/dir/moved2
-          new file mode 100644
-          index 0000000..5ef102f
-          --- /dev/null
-          +++ b/dir/moved2
-          @@ -0,0 +1,4 @@
-          +the
-          +ants
-          +go
-          +marching
-          diff --git a/dir/new b/dir/new
-          new file mode 100644
-          index 0000000..94954ab
-          --- /dev/null
-          +++ b/dir/new
-          @@ -0,0 +1,2 @@
-          +hello
-          +world
-        """
-        new = []
-        modified = []
-        removed = []
-        lines = diff_text.splitlines()
-        for i,line in enumerate(lines):
-            if not line.startswith('diff '):
-                continue
-            file_a,file_b = line.split()[-2:]
-            assert file_a.startswith('a/'), \
-                'missformed file_a %s' % file_a
-            assert file_b.startswith('b/'), \
-                'missformed file_b %s' % file_b
-            file = file_a[2:]
-            assert file_b[2:] == file, \
-                'diff file missmatch %s != %s' % (file_a, file_b)
-            if lines[i+1].startswith('new '):
-                new.append(file)
-            elif lines[i+1].startswith('index '):
-                modified.append(file)
-            elif lines[i+1].startswith('deleted '):
-                removed.append(file)
-        return (new,modified,removed)
-
     def _vcs_changed(self, revision):
-        return self._parse_diff(self._diff(revision))
+        """
+        Return a tuple of lists of ids
+          (new, modified, removed)
+        from the specified revision to the current situation.
+        """
+        output = self._diff(revision)
+        patch = PatchSet.from_string(output)
+        return patch.changed_files
 
 
 if libbe.TESTING == True:
