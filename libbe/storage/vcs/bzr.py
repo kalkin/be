@@ -127,7 +127,7 @@ class Bzr(base.VCS):
         path = os.path.join(self.repo, path)
         cmd = bzrlib.builtins.cmd_remove()
         cmd.outf = StringIO.StringIO()
-        cmd.run(file_list=[path], file_deletion_strategy='force')
+        cmd.run(file_list=[path], file_deletion_strategy='no-backup')
         if self.version_cmp(2,2,0) < 0:
             cmd.cleanup_now()
 
