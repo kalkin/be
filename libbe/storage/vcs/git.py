@@ -324,11 +324,9 @@ class ExecGit (PygitGit):
         # dealing with a bare repo.
         if os.path.isdir(path) != True:
             path = os.path.dirname(path)
-        status,output,error = self._u_invoke_client('rev-parse', '--show-top-level',
-                                                    cwd=path)
-        gitdir = os.path.join(path, output.rstrip('\n'))
-        dirname = os.path.abspath(os.path.dirname(gitdir))
-        return dirname
+        _, output, __ = self._u_invoke_client('rev-parse', '--show-toplevel',
+                                              cwd=path)
+        return os.path.abspath(output.strip())
 
     def _vcs_init(self, path):
         self._u_invoke_client('init', cwd=path)
