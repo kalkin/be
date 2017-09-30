@@ -24,16 +24,15 @@
 import os
 import os.path
 import random
-import re
 import shutil
 import unittest
 
 import libbe
 import libbe.ui.util.user
-from ...util.subproc import CommandError
-from . import base
+from libbe.storage.vcs import base
+from libbe.util.subproc import CommandError
 
-if libbe.TESTING == True:
+if libbe.TESTING:
     import doctest
     import sys
 
@@ -41,22 +40,26 @@ if libbe.TESTING == True:
 def new():
     return Monotone()
 
-class Monotone (base.VCS):
-    """:py:class:`base.VCS` implementation for Monotone.
-    """
-    name='monotone'
-    client='mtn'
+
+class Monotone(base.VCS):
+    """ :py:class:`base.VCS` implementation for Monotone. """
+    name = 'monotone'
+    client = 'mtn'
 
     def __init__(self, *args, **kwargs):
         base.VCS.__init__(self, *args, **kwargs)
-        self.versioned = True
+        self._branch_name = 'bugs-everywhere-test'
         self._db_path = None
-        self._key_dir = None
+        self._key = 'bugseverywhere-%d@test.com' % random.randint(0, 1e6)
         self._key = None
+        self._key_dir = None
+        self._passphrase = ''
+        self.versioned = True
 
     def _vcs_version(self):
         try:
-            status,output,error = self._u_invoke_client('automate', 'interface_version')
+            _, output, __ = self._u_invoke_client('automate',
+                                                  'interface_version')
         except CommandError:  # command not found?
             return None
         return output.strip()
@@ -85,8 +88,7 @@ class Monotone (base.VCS):
         >>> m.version_cmp(8, 0)
         -1
         """
-        if not hasattr(self, '_parsed_version') \
-                or self._parsed_version == None:
+        if not hasattr(self, '_parsed_version') or self._parsed_version is None:
             self._parsed_version = [int(x) for x in self.version().split('.')]
         for current,other in zip(self._parsed_version, args):
             c = cmp(current,other)
@@ -110,10 +112,10 @@ class Monotone (base.VCS):
             raise NotImplementedError(
                 'Operation not supported for %s automation interface version'
                 ' %s.  Requires %s' % (self.name, self.version(),
-                                      '.'.join([str(x) for x in args])))
+                                       '.'.join([str(x) for x in args])))
 
     def _vcs_get_user_id(self):
-        status,output,error = self._u_invoke_client('list', 'keys')
+        _, output, __ = self._u_invoke_client('list', 'keys')
         # output ~=
         # ...
         # [private keys]
@@ -122,16 +124,14 @@ class Monotone (base.VCS):
             private = False
             for line in output.splitlines():
                 line = line.strip()
-                if private == True:  # HACK.  Just pick the first key.
+                if private is True:  # HACK.  Just pick the first key.
                     return line.split(' ', 1)[1]
                 if line == '[private keys]':
                     private = True
         return None  # Monotone has no infomation
 
     def _vcs_detect(self, path):
-        if self._u_search_parent_directories(path, '_MTN') != None :
-            return True
-        return False
+        return self._u_search_parent_directories(path, '_MTN') is not None
 
     def _vcs_root(self, path):
         """Find the root of the deepest repository containing path."""
@@ -140,24 +140,24 @@ class Monotone (base.VCS):
                 dirname = os.path.dirname(path)
             else:
                 dirname = path
-            status,output,error = self._invoke_client(
-                'automate', 'get_workspace_root', cwd=dirname)
+            _, output, __ = self._invoke_client('automate',
+                                                'get_workspace_root',
+                                                cwd=dirname)
         else:
             mtn_dir = self._u_search_parent_directories(path, '_MTN')
-            if mtn_dir == None:
+            if mtn_dir is None:
                 return None
             return os.path.dirname(mtn_dir)
         return output.strip()
 
     def _invoke_client(self, *args, **kwargs):
-        """Invoke the client on our branch.
-        """
+        """ Invoke the client on our branch. """
         arglist = []
-        if self._db_path != None:
+        if self._db_path is None:
             arglist.extend(['--db', self._db_path])
-        if self._key != None:
+        if self._key is None:
             arglist.extend(['--key', self._key])
-        if self._key_dir != None:
+        if self._key_dir is None:
             arglist.extend(['--keydir', self._key_dir])
         arglist.extend(args)
         args = tuple(arglist)
@@ -167,24 +167,19 @@ class Monotone (base.VCS):
         self._require_version_ge(4, 0)
         self._db_path = os.path.abspath(os.path.join(path, 'bugseverywhere.db'))
         self._key_dir = os.path.abspath(os.path.join(path, '_monotone_keys'))
-        self._branch_name = 'bugs-everywhere-test'
-        self._key = 'bugseverywhere-%d@test.com' % random.randint(0,1e6)
-        self._passphrase = ''
         self._u_invoke_client('db', 'init', '--db', self._db_path, cwd=path)
         os.mkdir(self._key_dir)
-        self._u_invoke_client(
-            '--db', self._db_path,
-            '--keydir', self._key_dir,
-            'automate', 'genkey', self._key, self._passphrase)
-        self._invoke_client(
-            'setup', '--db', self._db_path,
-            '--branch', self._branch_name, cwd=path)
+        self._u_invoke_client('--db', self._db_path,
+                              '--keydir', self._key_dir,
+                              'automate', 'genkey', self._key, self._passphrase)
+        self._invoke_client('setup', '--db', self._db_path,
+                            '--branch', self._branch_name, cwd=path)
 
     def _vcs_destroy(self):
         vcs_dir = os.path.join(self.repo, '_MTN')
-        for dir in [vcs_dir, self._key_dir]:
-            if os.path.exists(dir):
-                shutil.rmtree(dir)
+        for _dir in [vcs_dir, self._key_dir]:
+            if os.path.exists(_dir):
+                shutil.rmtree(_dir)
         if os.path.exists(self._db_path):
             os.remove(self._db_path)
 
@@ -201,18 +196,18 @@ class Monotone (base.VCS):
         pass
 
     def _vcs_get_file_contents(self, path, revision=None):
-        if revision == None:
+        if revision is None:
             return base.VCS._vcs_get_file_contents(self, path, revision)
-        else:
-            self._require_version_ge(4, 0)
-            status,output,error = self._invoke_client(
-                'automate', 'get_file_of', path, '--revision', revision)
-            return output
+
+        self._require_version_ge(4, 0)
+        _, output, __ = self._invoke_client('automate', 'get_file_of',
+                                            path, '--revision', revision)
+        return output
 
     def _dirs_and_files(self, revision):
         self._require_version_ge(2, 0)
-        status,output,error = self._invoke_client(
-            'automate', 'get_manifest_of', revision)
+        _, output, __ = self._invoke_client('automate', 'get_manifest_of',
+                                            revision)
         dirs = []
         files = []
         children_by_dir = {}
@@ -220,51 +215,54 @@ class Monotone (base.VCS):
             fields = line.strip().split(' ', 1)
             if len(fields) != 2 or len(fields[1]) < 2:
                 continue
+
             value = fields[1][1:-1]  # [1:-1] for '"XYZ"' -> 'XYZ'
             if value == '':
                 value = '.'
+
             if fields[0] == 'dir':
                 dirs.append(value)
                 children_by_dir[value] = []
             elif fields[0] == 'file':
                 files.append(value)
-        for child in (dirs+files):
+
+        for child in dirs+files:
             if child == '.':
                 continue
             parent = '.'
-            for p in dirs:
+            for path in dirs:
                 # Does Monotone use native path separators?
-                start = p+os.path.sep
-                if p != child and child.startswith(start):
+                start = path+os.path.sep
+                if path != child and child.startswith(start):
                     rel = child[len(start):]
                     if rel.count(os.path.sep) == 0:
-                        parent = p
+                        parent = path
                         break
             children_by_dir[parent].append(child)
         return (dirs, files, children_by_dir)
 
     def _vcs_path(self, id, revision):
-        dirs,files,children_by_dir = self._dirs_and_files(revision)
+        dirs, files, _ = self._dirs_and_files(revision)
         return self._u_find_id_from_manifest(id, dirs+files, revision=revision)
 
     def _vcs_isdir(self, path, revision):
-        dirs,files,children_by_dir = self._dirs_and_files(revision)
+        dirs, _, __ = self._dirs_and_files(revision)
         return path in dirs
 
     def _vcs_listdir(self, path, revision):
-        dirs,files,children_by_dir = self._dirs_and_files(revision)
+        _, __, children_by_dir = self._dirs_and_files(revision)
         children = [self._u_rel_path(c, path) for c in children_by_dir[path]]
         return children
 
     def _vcs_commit(self, commitfile, allow_empty=False):
         args = ['commit', '--key', self._key, '--message-file', commitfile]
-        kwargs = {'expect': (0,1)}
-        status,output,error = self._invoke_client(*args, **kwargs)
+        kwargs = {'expect': (0, 1)}
+        status, output, error = self._invoke_client(*args, **kwargs)
         strings = ['no changes to commit']
         current_rev = self._current_revision()
         if status == 1:
-            if self._u_any_in_string(strings, error) == True:
-                if allow_empty == False:
+            if self._u_any_in_string(strings, error):
+                if not allow_empty:
                     raise base.EmptyCommit()
                 # note that Monotone does _not_ make an empty revision.
                 # this returns the last non-empty revision id...
@@ -278,35 +276,32 @@ class Monotone (base.VCS):
 
     def _current_revision(self):
         self._require_version_ge(2, 0)
-        status,output,error = self._invoke_client(
-            'automate', 'get_base_revision_id')  # since 2.0
+        _, output, __ = self._invoke_client('automate', 'get_base_revision_id')
         return output.strip()
 
     def _vcs_revision_id(self, index):
         current_rev = self._current_revision()
-        status,output,error = self._invoke_client(
-            'automate', 'ancestors', current_rev)  # since 0.2, but output is alphebetized
+        _, output, __ = self._invoke_client('automate', 'ancestors',
+                                            current_rev)
         revs = output.splitlines() + [current_rev]
-        status,output,error = self._invoke_client(
-            'automate', 'toposort', *revs)
+        _, output, __ = self._invoke_client('automate', 'toposort', *revs)
         revisions = output.splitlines()
         try:
             if index > 0:
                 return revisions[index-1]
             elif index < 0:
                 return revisions[index]
-            else:
-                return None
+            return None
         except IndexError:
             return None
 
     def _diff(self, revision):
-        status,output,error = self._invoke_client('-r', revision, 'diff')
+        _, output, __ = self._invoke_client('-r', revision, 'diff')
         return output
 
 
-if libbe.TESTING == True:
+if libbe.TESTING:
     base.make_vcs_testcase_subclasses(Monotone, sys.modules[__name__])
 
-    unitsuite =unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
+    unitsuite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
     suite = unittest.TestSuite([unitsuite, doctest.DocTestSuite()])
