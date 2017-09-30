@@ -702,35 +702,37 @@ class Bug (settings_object.SavedSettingsObject):
                     if accept_changes:
                         setattr(self, attr, new)
                     elif change_exception:
-                        raise ValueError(
-                            ('Merge would change {} "{}"->"{}" for bug {}'
-                             ).format(attr, old, new, self.uuid))
+                        msg = 'Merge would change {} "{}"->"{}" for bug {}'\
+                              .format(attr, old, new, self.uuid)
+                        raise ValueError(msg)
         for estr in other.extra_strings:
             if not estr in self.extra_strings:
-                if accept_extra_strings == True:
+                if accept_extra_strings:
                     self.extra_strings += [estr]
-                elif change_exception == True:
-                    raise ValueError, \
-                        'Merge would add extra string "%s" for bug %s' \
-                        % (estr, self.uuid)
+                elif change_exception:
+                    msg = 'Merge would add extra string "%s" for bug %s'\
+                           % (estr, self.uuid)
+                    raise ValueError(msg)
+
         for o_comm in other.comments():
             try:
                 s_comm = self.comment_root.comment_from_uuid(o_comm.uuid)
-            except KeyError, e:
+            except KeyError:
                 try:
                     s_comm = self.comment_root.comment_from_uuid(o_comm.alt_id)
-                except KeyError, e:
+                except KeyError:
                     s_comm = None
-            if s_comm == None:
-                if accept_comments == True:
+
+            if s_comm is None:
+                if accept_comments:
                     o_comm_copy = copy.copy(o_comm)
                     o_comm_copy.bug = self
                     o_comm_copy.id = libbe.util.id.ID(o_comm_copy, 'comment')
                     self.comment_root.add_reply(o_comm_copy)
-                elif change_exception == True:
-                    raise ValueError, \
-                        'Merge would add comment %s (alt: %s) to bug %s' \
-                        % (o_comm.uuid, o_comm.alt_id, self.uuid)
+                elif change_exception:
+                    msg = 'Merge would add comment %s (alt: %s) to bug %s'\
+                           % (o_comm.uuid, o_comm.alt_id, self.uuid)
+                    raise ValueError(msg)
             else:
                 s_comm.merge(o_comm, accept_changes=accept_changes,
                              accept_extra_strings=accept_extra_strings,

@@ -360,6 +360,7 @@ class VCS (libbe.storage.base.VersionedStorage):
         self.versioned = False
         self._cached_path_id = CachedPathID()
         self._rooted = False
+        self._parsed_version = None
 
     def _vcs_version(self):
         """
@@ -564,33 +565,31 @@ class VCS (libbe.storage.base.VersionedStorage):
         >>> v.version_cmp(2,0,0,'rc',1)
         -1
         """
-        if not hasattr(self, '_parsed_version') \
-                or self._parsed_version == None:
+        if self._parsed_version is None:
             num_part = self.version().split(' ')[0]
             self._parsed_version = []
             for num in num_part.split('.'):
                 try:
                     self._parsed_version.append(int(num))
-                except ValueError, e:
+                except ValueError:
                     # bzr version number might contain non-numerical tags
                     splitter = re.compile(r'[\D]') # Match non-digits
                     splits = splitter.split(num)
                     # if len(tag) > 1 some splits will be empty; remove
-                    splits = filter(lambda s: s != '', splits)
+                    splits = [s for s in splits if s]
                     tag_starti = len(splits[0])
                     num_starti = num.find(splits[1], tag_starti)
                     tag = num[tag_starti:num_starti]
                     self._parsed_version.append(int(splits[0]))
                     self._parsed_version.append(tag)
                     self._parsed_version.append(int(splits[1]))
-        for current,other in zip(self._parsed_version, args):
-            if type(current) != type (other):
+        for current, other in zip(self._parsed_version, args):
+            if not isinstance(current, other.__class__):
                 # one of them is a pre-release string
-                if type(current) != types.IntType:
+                if not isinstance(current, int):
                     return -1
-                else:
-                    return 1
-            c = cmp(current,other)
+                return 1
+            c = cmp(current, other)
             if c != 0:
                 return c
         # see if one is longer than the other
@@ -599,15 +598,15 @@ class VCS (libbe.storage.base.VersionedStorage):
         if verlen == arglen:
             return 0
         elif verlen > arglen:
-            if type(self._parsed_version[arglen]) != types.IntType:
+            if not isinstance(self._parsed_version[arglen], int):
                 return -1 # self is a prerelease
-            else:
-                return 1
-        else:
-            if type(args[verlen]) != types.IntType:
-                return 1 # args is a prerelease
-            else:
-                return -1
+
+            return 1
+
+        if not isinstance(args[verlen], int):
+            return 1  # args is a prerelease
+
+        return -1
 
     def installed(self):
         if self.version() != None:
