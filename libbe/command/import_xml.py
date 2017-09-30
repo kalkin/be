@@ -20,10 +20,7 @@
 import copy
 import os
 import sys
-try: # import core module, Python >= 2.5
-    from xml.etree import ElementTree
-except ImportError: # look for non-core module
-    from elementtree import ElementTree
+from xml.etree import ElementTree
 
 import libbe
 import libbe.bug

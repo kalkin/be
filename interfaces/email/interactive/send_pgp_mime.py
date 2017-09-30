@@ -37,25 +37,14 @@ import sys
 import tempfile
 import types
 
-try:
-    from email import Message
-    from email.mime.text import MIMEText
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.application import MIMEApplication
-    from email.encoders import encode_7or8bit
-    from email.generator import Generator
-    from email.parser import Parser
-    from email.utils import getaddress
-except ImportError:
-    # adjust to old python 2.4
-    from email import Message
-    from email.MIMEText import MIMEText
-    from email.MIMEMultipart import MIMEMultipart
-    from email.MIMENonMultipart import MIMENonMultipart
-    from email.Encoders import encode_7or8bit
-    from email.Generator import Generator
-    from email.Parser import Parser
-    from email.Utils import getaddresses
+from email import Message
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+from email.encoders import encode_7or8bit
+from email.generator import Generator
+from email.parser import Parser
+from email.utils import getaddress
 
     getaddress = getaddresses
     class MIMEApplication (MIMENonMultipart):

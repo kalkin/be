@@ -28,17 +28,9 @@ import os.path
 import sys
 import time
 import types
-try:
-    from email.mime.base import MIMEBase
-    from email.encoders import encode_base64
-except ImportError:
-    # adjust to old python 2.4
-    from email.MIMEBase import MIMEBase
-    from email.Encoders import encode_base64
-try: # import core module, Python >= 2.5
-    from xml.etree import ElementTree
-except ImportError: # look for non-core module
-    from elementtree import ElementTree
+from email.mime.base import MIMEBase
+from email.encoders import encode_base64
+from xml.etree import ElementTree
 import xml.sax.saxutils
 
 import libbe

@@ -25,10 +25,7 @@ humans, with the "user IDs" discussed in :py:mod:`libbe.util.id`, which
 are human-readable tags refering to objects.
 """
 
-try:
-    from email.utils import formataddr, parseaddr
-except ImportErrror:  # adjust to old python < 2.5
-    from email.Utils import formataddr, parseaddr
+from email.utils import formataddr, parseaddr
 import os
 try:
     import pwd

@@ -31,10 +31,7 @@ import errno
 import sys
 import time
 import types
-try: # import core module, Python >= 2.5
-    from xml.etree import ElementTree
-except ImportError: # look for non-core module
-    from elementtree import ElementTree
+from xml.etree import ElementTree
 import xml.sax.saxutils
 
 import libbe

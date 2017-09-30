@@ -29,10 +29,7 @@ import shutil
 import sys
 import time # work around http://mercurial.selenic.com/bts/issue618
 import types
-try: # import core module, Python >= 2.5
-    from xml.etree import ElementTree
-except ImportError: # look for non-core module
-    from elementtree import ElementTree
+from xml.etree import ElementTree
 from xml.sax.saxutils import unescape
 
 import libbe

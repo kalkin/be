@@ -70,48 +70,23 @@ caching global comment-lookup tables and enables easy error messages
 ``bea`` bug directory is located").
 """
 
-import os.path
 import re
+from uuid import uuid4
 
 import libbe
 
-if libbe.TESTING == True:
+if libbe.TESTING:
     import doctest
     import sys
     import unittest
 
-try:
-    from uuid import uuid4 # Python >= 2.5
-    def uuid_gen():
-        id = uuid4()
-        idstr = id.urn
-        start = "urn:uuid:"
-        assert idstr.startswith(start)
-        return idstr[len(start):]
-except ImportError:
-    import os
-    import sys
-    from subprocess import Popen, PIPE
 
-    def uuid_gen():
-        # Shell-out to system uuidgen
-        args = ['uuidgen', 'r']
-        try:
-            if sys.platform != "win32":
-                q = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-            else:
-                # win32 don't have os.execvp() so have to run command in a shell
-                q = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE,
-                          shell=True, cwd=cwd)
-        except OSError, e :
-            strerror = "%s\nwhile executing %s" % (e.args[1], args)
-            raise OSError, strerror
-        output, error = q.communicate()
-        status = q.wait()
-        if status != 0:
-            strerror = "%s\nwhile executing %s" % (status, args)
-            raise Exception, strerror
-        return output.rstrip('\n')
+def uuid_gen():
+    """ Helper function for generating UUIDv4 """
+    idstr = uuid4().urn
+    start = "urn:uuid:"
+    assert idstr.startswith(start)
+    return idstr[len(start):]
 
 
 HIERARCHY = ['bugdir', 'bug', 'comment']

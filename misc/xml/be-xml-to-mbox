@@ -33,10 +33,7 @@ from libbe.util.encoding import get_output_encoding
 from libbe.util.utility import str_to_time as rfc2822_to_gmtime_integer
 from time import asctime, gmtime
 import types
-try: # import core module, Python >= 2.5
-    from xml.etree import ElementTree
-except ImportError: # look for non-core module
-    from elementtree import ElementTree
+from xml.etree import ElementTree
 from xml.sax.saxutils import unescape
 
 
