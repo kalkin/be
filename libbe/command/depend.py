@@ -195,72 +195,78 @@ class Depend (libbe.command.Command):
                 ])
 
     def _run(self, **params):
-        if params['repair'] == True and params['bug-id'] != None:
+        if params['repair'] and params['bug-id'] is not None:
             raise libbe.command.UserError(
                 'No arguments with --repair calls.')
-        if params['repair'] == False and params['bug-id'] == None:
+        elif not params['repair'] and params['bug-id'] is None:
             raise libbe.command.UserError(
                 'Must specify either --repair or a BUG-ID')
-        if params['tree-depth'] != None \
-                and params['blocking-bug-id'] != None:
+
+        if params['tree-depth'] is not None \
+                and params['blocking-bug-id'] is not None:
             raise libbe.command.UserError(
                 'Only one bug id used in tree mode.')
+
         bugdirs = self._get_bugdirs()
-        if params['repair'] == True:
-            good,fixed,broken = check_dependencies(
-                bugdirs, repair_broken_links=True)
-            assert len(broken) == 0, broken
-            if len(fixed) > 0:
+        if params['repair']:
+            _, fixed, broken = check_dependencies(bugdirs,
+                                                  repair_broken_links=True)
+            assert not broken, broken
+            if fixed:
                 print >> self.stdout, 'Fixed the following links:'
                 print >> self.stdout, \
-                    '\n'.join(['%s |-- %s' % (blockee.id.user(), blocker.id.user())
-                               for blockee,blocker in fixed])
+                    '\n'.join(['%s |-- %s' %
+                               (blockee.id.user(), blocker.id.user())
+                               for blockee, blocker in fixed])
             return 0
         status = parse_status(params['status'])
         severity = parse_severity(params['severity'])
-        filter = Filter(status, severity)
+        _filter = Filter(status, severity)
 
-        bugdir,bugA,dummy_comment = (
+        _, bug_a, dummy_comment = (
             libbe.command.util.bugdir_bug_comment_from_user_id(
                 bugdirs, params['bug-id']))
 
-        if params['tree-depth'] != None:
-            dtree = DependencyTree(bugdirs, bugA, params['tree-depth'], filter)
-            if len(dtree.blocked_by_tree()) > 0:
-                print >> self.stdout, '%s blocked by:' % bugA.id.user()
-                for depth,node in dtree.blocked_by_tree().thread():
-                    if depth == 0: continue
+        if params['tree-depth'] is not None:
+            dtree = DependencyTree(bugdirs, bug_a, params['tree-depth'],
+                                   _filter)
+            if dtree.blocked_by_tree():
+                print >> self.stdout, '%s blocked by:' % bug_a.id.user()
+                for depth, node in dtree.blocked_by_tree().thread():
+                    if depth == 0:
+                        continue
                     print >> self.stdout, (
                         '%s%s'
                         % (' '*(depth), self.bug_string(node.bug, params)))
-            if len(dtree.blocks_tree()) > 0:
-                print >> self.stdout, '%s blocks:' % bugA.id.user()
-                for depth,node in dtree.blocks_tree().thread():
-                    if depth == 0: continue
+            if dtree.blocks_tree():
+                print >> self.stdout, '%s blocks:' % bug_a.id.user()
+                for depth, node in dtree.blocks_tree().thread():
+                    if depth == 0:
+                        continue
                     print >> self.stdout, (
                         '%s%s'
                         % (' '*(depth), self.bug_string(node.bug, params)))
             return 0
 
-        if params['blocking-bug-id'] != None:
-            bugdirB,bugB,dummy_comment = (
+        if params['blocking-bug-id'] is not None:
+            bugdirB, bug_b, dummy_comment = (
                 libbe.command.util.bugdir_bug_comment_from_user_id(
                     bugdirs, params['blocking-bug-id']))
-            if params['remove'] == True:
-                remove_block(bugA, bugB)
-            else: # add the dependency
-                add_block(bugA, bugB)
+            if params['remove']:
+                remove_block(bug_a, bug_b)
+            else:  # add the dependency
+                add_block(bug_a, bug_b)
 
-        blocked_by = get_blocked_by(bugdirs, bugA)
+        blocked_by = get_blocked_by(bugdirs, bug_a)
 
-        if len(blocked_by) > 0:
-            print >> self.stdout, '%s blocked by:' % bugA.id.user()
+        if blocked_by:
+            print >> self.stdout, '%s blocked by:' % bug_a.id.user()
             print >> self.stdout, \
                 '\n'.join([self.bug_string(_bug, params)
                            for _bug in blocked_by])
-        blocks = get_blocks(bugdirs, bugA)
-        if len(blocks) > 0:
-            print >> self.stdout, '%s blocks:' % bugA.id.user()
+        blocks = get_blocks(bugdirs, bug_a)
+        if blocks:
+            print >> self.stdout, '%s blocks:' % bug_a.id.user()
             print >> self.stdout, \
                 '\n'.join([self.bug_string(_bug, params)
                            for _bug in blocks])
