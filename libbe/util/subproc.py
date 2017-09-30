@@ -25,16 +25,11 @@ import sys
 import types
 
 import libbe
-from encoding import get_encoding
-if libbe.TESTING == True:
-    import doctest
+from libbe.util.encoding import get_encoding
 
 _MSWINDOWS = sys.platform == 'win32'
 _POSIX = not _MSWINDOWS
 
-if _POSIX == True:
-    import os
-    import select
 
 class CommandError(Exception):
     def __init__(self, command, status, stdout=None, stderr=None):
@@ -46,15 +41,17 @@ class CommandError(Exception):
         self.stdout = stdout
         self.stderr = stderr
 
+
 def invoke(args, stdin=None, stdout=PIPE, stderr=PIPE, expect=(0,),
            cwd=None, shell=None, unicode_output=True, encoding=None, **kwargs):
     """
-    expect should be a tuple of allowed exit codes.  cwd should be
-    the directory from which the command will be executed.  When
-    unicode_output == True, convert stdout and stdin strings to
-    unicode before returing them.
+        :param expect: should be a tuple of allowed exit codes.
+        :param cwd: should be the directory from which the command will be
+                    executed.
+        :param unicode_output: When `True`, convert stdout and stdin strings to
+                               unicode before returing them.
     """
-    if cwd == None:
+    if cwd is None:
         cwd = '.'
     if isinstance(shell, types.StringTypes):
         list_args = ' '.split(args)  # sloppy, but just for logging
@@ -62,37 +59,39 @@ def invoke(args, stdin=None, stdout=PIPE, stderr=PIPE, expect=(0,),
     else:
         list_args = args
         str_args = ' '.join(args)  # sloppy, but just for logging
-    libbe.LOG.debug('{0}$ {1}'.format(cwd, str_args))
-    try :
+    libbe.LOG.debug('%s$ %s', cwd, str_args)
+
+    try:
         if _POSIX:
             if shell is None:
                 shell = False
-            q = Popen(args, stdin=PIPE, stdout=stdout, stderr=stderr,
-                      shell=shell, cwd=cwd, **kwargs)
+            popen = Popen(args, stdin=PIPE, stdout=stdout, stderr=stderr,
+                          shell=shell, cwd=cwd, **kwargs)
         else:
-            assert _MSWINDOWS==True, 'invalid platform'
+            assert _MSWINDOWS, 'invalid platform'
             if shell is None:
                 shell = True
             # win32 don't have os.execvp() so have to run command in a shell
-            q = Popen(args, stdin=PIPE, stdout=stdout, stderr=stderr,
-                      shell=shell, cwd=cwd, **kwargs)
-    except OSError, e:
-        raise CommandError(list_args, status=e.args[0], stderr=e)
-    stdout,stderr = q.communicate(input=stdin)
-    status = q.wait()
-    if unicode_output == True:
-        if encoding == None:
+            popen = Popen(args, stdin=PIPE, stdout=stdout, stderr=stderr,
+                          shell=shell, cwd=cwd, **kwargs)
+    except OSError, exc:
+        raise CommandError(list_args, status=exc.args[0], stderr=exc)
+
+    stdout, stderr = popen.communicate(input=stdin)
+    status = popen.wait()
+
+    if unicode_output:
+        if encoding is None:
             encoding = get_encoding()
-        if stdout != None:
+        if stdout is not None:
             stdout = unicode(stdout, encoding)
-        if stderr != None:
+        if stderr is not None:
             stderr = unicode(stderr, encoding)
-        libbe.LOG.debug(u'{0}\n{1}{2}'.format(status, stdout, stderr))
+        libbe.LOG.debug(u'%s\n%s%s', status, stdout, stderr)
     else:
-        libbe.LOG.debug('{0}\n{1}{2}'.format(status, stdout, stderr))
+        libbe.LOG.debug('%s\n%s%s', status, stdout, stderr)
+
     if status not in expect:
         raise CommandError(list_args, status, stdout, stderr)
-    return status, stdout, stderr
 
-if libbe.TESTING == True:
-    suite = doctest.DocTestSuite()
+    return status, stdout, stderr
