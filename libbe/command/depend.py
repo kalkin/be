@@ -25,51 +25,72 @@ import libbe.command
 import libbe.command.util
 import libbe.util.tree
 
-BLOCKS_TAG="BLOCKS:"
-BLOCKED_BY_TAG="BLOCKED-BY:"
+BLOCKS_TAG = "BLOCKS:"
+BLOCKED_BY_TAG = "BLOCKED-BY:"
 
 
-class Filter (object):
+class Filter(object):
+    # pylint: disable=too-few-public-methods, missing-docstring
     def __init__(self, status='all', severity='all', assigned='all',
-                 target='all', extra_strings_regexps=[]):
+                 target='all', extra_strings_regexps=None):
         self.status = status
         self.severity = severity
         self.assigned = assigned
         self.target = target
-        self.extra_strings_regexps = extra_strings_regexps
+        self.extra_strings_regexps = extra_strings_regexps or []
 
     def __call__(self, bugdirs, bug):
-        if self.status != 'all' and not bug.status in self.status:
+        if not (self._match_attr(bug, 'status') and
+                self._match_attr(bug, 'severity') and
+                self._match_attr(bug, 'assigned')):
             return False
-        if self.severity != 'all' and not bug.severity in self.severity:
+
+        if not self._match_target(bugdirs, bug):
             return False
-        if self.assigned != 'all' and not bug.assigned in self.assigned:
+
+        if not bug.extra_strings and self.extra_strings_regexps:
             return False
-        if self.target == 'all':
-            pass
-        else:
-            target_bug = libbe.command.target.bug_target(bugdirs, bug)
-            if self.target in ['none', None]:
-                if target_bug.summary != None:
-                    return False
-            else:
-                if target_bug.summary != self.target:
-                    return False
-        if len(bug.extra_strings) == 0:
-            if len(self.extra_strings_regexps) > 0:
-                return False
-        elif len(self.extra_strings_regexps) > 0:
-            matched = False
-            for string in bug.extra_strings:
-                for regexp in self.extra_strings_regexps:
-                    if regexp.match(string):
-                        matched = True
-                        break
-                if matched == True:
-                    break
-            if matched == False:
-                return False
+
+        if not self._match_extra_strings(bug):
+            return False
+
         return True
+
+    def _match_attr(self, bug, attr):
+        allowed_attributes = ['status', 'severity', 'assigned']
+        assert attr in allowed_attributes,\
+            'Attribute %s not in %s' % (attr, allowed_attributes)
+        assert hasattr(self, attr), 'Unknown attribute %s' % attr
+
+        self_att = getattr(self, attr)
+        bug_att = getattr(bug, attr)
+        return self_att == 'all' or bug_att in self_att
+
+    def _match_target(self, bugdirs, bug):
+        if self.target == 'all':
+            return True
+
+        target_bug = libbe.command.target.bug_target(bugdirs, bug)
+
+        if self.target in ['none', None] and target_bug.summary is None:
+            return True
+
+        if target_bug.summary == self.target:
+            return True
+
+        return False
+
+    def _match_extra_strings(self, bug):
+        if not self.extra_strings_regexps:
+            return True
+
+        for string in bug.extra_strings:
+            for regexp in self.extra_strings_regexps:
+                if regexp.match(string):
+                    return True
+
+        return False
+
 
 def parse_status(status):
     if status == 'all':
