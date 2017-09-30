@@ -28,36 +28,35 @@ import sys as _sys
 # Inspired by Nathan Weizenbaum's
 #   http://nex-3.com/posts/73-git-style-automatic-paging-in-ruby
 def run_pager(paginate='auto'):
-    """Use the environment variable PAGER page future stdout output
+    """ Use the environment variable PAGER page future stdout output paginate
+        should be one of 'never', 'auto', or 'always'.
 
-    paginate should be one of 'never', 'auto', or 'always'.
+        Usage: just call this function and continue using sys.stdout like you
+        normally would.
 
-    usage: just call this function and continue using sys.stdout like
-    you normally would.
+        Notes
+        -----
 
-    Notes
-    -----
-
-    This function creates forks a child, which continues executing the
-    calling code.  The parent calls :py:func:`os.execvpe` to morph
-    into `PAGER`.  The child keeps the original stdin, and the child's
-    stdout becomes the parent's stdin.  The parent keeps the original
-    stdout.
+        This function creates forks a child, which continues executing the
+        calling code.  The parent calls :py:func:`os.execvpe` to morph into
+        `PAGER`.  The child keeps the original stdin, and the child's stdout
+        becomes the parent's stdin.  The parent keeps the original stdout.
     """
-    if (paginate == 'never' or
-        _sys.platform == 'win32' or
-        not hasattr(_sys.stdout, 'isatty') or
-        not _sys.stdout.isatty()):
+    if (paginate == 'never' or _sys.platform == 'win32' or
+            not hasattr(_sys.stdout, 'isatty') or
+            not _sys.stdout.isatty()):
         return
 
     env = dict(_os.environ)
-    if paginate == 'auto':
-        if 'LESS' not in env:
-            env['LESS'] = ''  # += doesn't work on undefined var
-        else:
-            env['LESS'] += ' '  # separate from existing variables
+
+    if paginate == 'auto' and 'LESS' not in env:
+        env['LESS'] = ''  # += doesn't work on undefined var
+    elif paginate == 'auto':
+        env['LESS'] += ' '  # separate from existing variables
+    else:
         # don't page if the input is short enough
         env['LESS'] += '-FRX'
+
     pager = _os.environ.get('PAGER', 'less')
     args = _shlex.split(pager)
     pager = args[0]
