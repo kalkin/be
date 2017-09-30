@@ -32,7 +32,6 @@ import re
 import shutil
 import sys
 import tempfile
-import types
 
 import libbe
 import libbe.storage
@@ -40,13 +39,13 @@ import libbe.storage.base
 import libbe.util.encoding
 from libbe.storage.base import EmptyCommit, InvalidRevision, InvalidID
 from libbe.util.utility import Dir, search_parent_directories
-from libbe.util.subproc import CommandError, invoke
+from libbe.util.subproc import invoke
 from libbe.util.plugin import import_by_name
 import libbe.storage.util.upgrade as upgrade
 
 from libbe.unidiff import PatchSet
 
-if libbe.TESTING == True:
+if libbe.TESTING:
     import unittest
     import doctest
 
@@ -57,6 +56,7 @@ VCS_ORDER = ['bzr', 'darcs', 'git', 'hg', 'monotone']
 
 Don't list this module, it is implicitly last.
 """
+
 
 def set_preferred_vcs(name):
     """Manipulate :py:data:`VCS_ORDER` to place `name` first.
@@ -69,6 +69,7 @@ def set_preferred_vcs(name):
     VCS_ORDER.remove(name)
     VCS_ORDER.insert(0, name)
 
+
 def _get_matching_vcs(matchfn):
     """Return the first module for which matchfn(VCS_instance) is True.
 
@@ -77,9 +78,10 @@ def _get_matching_vcs(matchfn):
     for submodname in VCS_ORDER:
         module = import_by_name('libbe.storage.vcs.%s' % submodname)
         vcs = module.new()
-        if matchfn(vcs) == True:
+        if matchfn(vcs):
             return vcs
     return VCS()
+
 
 def vcs_by_name(vcs_name):
     """Return the module for the VCS with the given name.
@@ -90,12 +92,14 @@ def vcs_by_name(vcs_name):
         return new()
     return _get_matching_vcs(lambda vcs: vcs.name == vcs_name)
 
+
 def detect_vcs(dir):
     """Return an VCS instance for the vcs being used in this directory.
 
     Searches in :py:data:`VCS_ORDER`.
     """
     return _get_matching_vcs(lambda vcs: vcs._detect(dir))
+
 
 def installed_vcs():
     """Return an instance of an installed VCS.
@@ -105,36 +109,40 @@ def installed_vcs():
     return _get_matching_vcs(lambda vcs: vcs.installed())
 
 
-class VCSNotRooted (libbe.storage.base.ConnectionError):
+class VCSNotRooted(libbe.storage.base.ConnectionError):
     def __init__(self, vcs):
         msg = 'VCS not rooted'
-        libbe.storage.base.ConnectionError.__init__(self, msg)
+        super(VCSNotRooted, self).__init__(msg)
         self.vcs = vcs
 
-class VCSUnableToRoot (libbe.storage.base.ConnectionError):
+
+class VCSUnableToRoot(libbe.storage.base.ConnectionError):
     def __init__(self, vcs):
         msg = 'VCS unable to root'
-        libbe.storage.base.ConnectionError.__init__(self, msg)
+        super(VCSUnableToRoot, self).__init__(msg)
         self.vcs = vcs
 
-class InvalidPath (InvalidID):
+
+class InvalidPath(InvalidID):
     def __init__(self, path, root, msg=None, **kwargs):
-        if msg == None:
+        if msg is None:
             msg = 'Path "%s" not in root "%s"' % (path, root)
-        InvalidID.__init__(self, msg=msg, **kwargs)
+        super(InvalidPath, self).__init__(msg=msg, **kwargs)
         self.path = path
         self.root = root
 
-class SpacerCollision (InvalidPath):
+
+class SpacerCollision(InvalidPath):
     def __init__(self, path, spacer):
         msg = 'Path "%s" collides with spacer directory "%s"' % (path, spacer)
-        InvalidPath.__init__(self, path, root=None, msg=msg)
+        super(SpacerCollision, self).__init__(path, root=None, msg=msg)
         self.spacer = spacer
 
-class NoSuchFile (InvalidID):
+
+class NoSuchFile(InvalidID):
     def __init__(self, pathname, root='.'):
         path = os.path.abspath(os.path.join(root, pathname))
-        InvalidID.__init__(self, 'No such file: %s' % path)
+        super(NoSuchFile, self).__init__('No such file: %s' % path)
 
 
 class CachedPathID (object):
@@ -202,6 +210,8 @@ class CachedPathID (object):
     """
     def __init__(self, encoding=None):
         self.encoding = libbe.util.encoding.get_text_file_encoding()
+        self._cache = {}  # key: uuid, value: path
+        self._changed = False
         self._spacer_dirs = ['.be', 'bugs', 'comments']
 
     def root(self, path):
@@ -216,29 +226,27 @@ class CachedPathID (object):
 
             UUID\tPATH
         """
-        if cache == None:
-            self._cache = {}
-        else:
+        if cache is not None:
             self._cache = cache
+
         spaced_root = os.path.join(self._root, self._spacer_dirs[0])
-        for dirpath, dirnames, filenames in os.walk(spaced_root,
-                                                    followlinks=True):
+        for dirpath, _, __ in os.walk(spaced_root, followlinks=True):
             if dirpath == spaced_root:
                 continue
             try:
-                id = self.id(dirpath)
+                _id = self.id(dirpath)
                 relpath = dirpath[len(self._root + os.path.sep):]
-                if id.count('/') == 0:
-                    if id in self._cache:
+                if _id.count('/') == 0:
+                    if _id in self._cache:
                         libbe.LOG.warning(
                             'multiple paths for {0}:\n  {1}\n  {2}'.format(
-                                id, self._cache[id], relpath))
-                    self._cache[id] = relpath
+                                _id, self._cache[_id], relpath))
+                    self._cache[_id] = relpath
             except InvalidPath:
                 pass
         if self._cache != cache:
             self._changed = True
-        if cache == None:
+        if cache is None:
             self.disconnect()
 
     def destroy(self):
@@ -251,24 +259,22 @@ class CachedPathID (object):
                 self.init()
             except IOError:
                 raise libbe.storage.base.ConnectionError
-        self._cache = {} # key: uuid, value: path
         self._changed = False
-        f = codecs.open(self._cache_path, 'r', self.encoding)
-        for line in f:
-            fields = line.rstrip('\n').split('\t')
-            self._cache[fields[0]] = fields[1]
-        f.close()
+        with(codecs.open(self._cache_path, 'r', self.encoding)) as f:
+            for line in f:
+                fields = line.rstrip('\n').split('\t')
+                self._cache[fields[0]] = fields[1]
 
     def disconnect(self):
-        if self._changed == True:
+        if self._changed:
             f = codecs.open(self._cache_path, 'w', self.encoding)
-            for uuid,path in self._cache.items():
+            for uuid, path in self._cache.items():
                 f.write('%s\t%s\n' % (uuid, path))
             f.close()
         self._cache = {}
 
-    def path(self, id, relpath=False):
-        fields = id.split('/', 1)
+    def path(self, _id, relpath=False):
+        fields = _id.split('/', 1)
         uuid = fields[0]
         if len(fields) == 1:
             extra = []
@@ -278,21 +284,21 @@ class CachedPathID (object):
             self.init(cache=self._cache)
             if uuid not in self._cache:
                 raise InvalidID(uuid)
-        if relpath == True:
+        if relpath:
             return os.path.join(self._cache[uuid], *extra)
         return os.path.join(self._root, self._cache[uuid], *extra)
 
-    def add_id(self, id, parent=None):
-        if id.count('/') > 0:
+    def add_id(self, _id, parent=None):
+        if _id.count('/') > 0:
             # not a UUID-level path
-            assert id.startswith(parent), \
-                'Strange ID: "%s" should start with "%s"' % (id, parent)
-            path = self.path(id)
-        elif id in self._cache:
+            assert _id.startswith(parent), \
+                'Strange ID: "%s" should start with "%s"' % (_id, parent)
+            path = self.path(_id)
+        elif _id in self._cache:
             # already added
-            path = self.path(id)
+            path = self.path(_id)
         else:
-            if parent == None:
+            if parent is None:
                 parent_path = ''
                 spacer = self._spacer_dirs[0]
             else:
@@ -302,16 +308,16 @@ class CachedPathID (object):
                 parent_spacer = parent_path.split(os.path.sep)[-2]
                 i = self._spacer_dirs.index(parent_spacer)
                 spacer = self._spacer_dirs[i+1]
-            path = os.path.join(parent_path, spacer, id)
-            self._cache[id] = path
+            path = os.path.join(parent_path, spacer, _id)
+            self._cache[_id] = path
             self._changed = True
             path = os.path.join(self._root, path)
         return path
 
-    def remove_id(self, id):
-        if id.count('/') > 0:
-            return # not a UUID-level path
-        self._cache.pop(id)
+    def remove_id(self, _id):
+        if _id.count('/') > 0:
+            return  # not a UUID-level path
+        self._cache.pop(_id)
         self._changed = True
 
     def id(self, path):
@@ -325,23 +331,24 @@ class CachedPathID (object):
         for spacer in self._spacer_dirs:
             if not path.startswith(spacer + os.path.sep):
                 break
-            id = path[len(spacer + os.path.sep):]
-            fields = path[len(spacer + os.path.sep):].split(os.path.sep,1)
+            _id = path[len(spacer + os.path.sep):]
+            fields = path[len(spacer + os.path.sep):].split(os.path.sep, 1)
             if len(fields) == 1:
                 break
             path = fields[1]
         for spacer in self._spacer_dirs:
-            if id.endswith(os.path.sep + spacer):
+            if _id.endswith(os.path.sep + spacer):
                 raise SpacerCollision(orig_path, spacer)
         if os.path.sep != '/':
-            id = id.replace(os.path.sep, '/')
-        return id
+            _id = _id.replace(os.path.sep, '/')
+        return _id
 
 
 def new():
     return VCS()
 
-class VCS (libbe.storage.base.VersionedStorage):
+
+class VCS(libbe.storage.base.VersionedStorage):
     """Implement a 'no-VCS' interface.
 
     Support for other VCSs can be added by subclassing this class, and
@@ -351,7 +358,7 @@ class VCS (libbe.storage.base.VersionedStorage):
     methods.
     """
     name = 'None'
-    client = 'false' # command-line tool for _u_invoke_client
+    client = 'false'  # command-line tool for _u_invoke_client
 
     def __init__(self, *args, **kwargs):
         if 'encoding' not in kwargs:
@@ -361,14 +368,15 @@ class VCS (libbe.storage.base.VersionedStorage):
         self._cached_path_id = CachedPathID()
         self._rooted = False
         self._parsed_version = None
+        self._version = None
 
-    def _vcs_version(self):
+    def _vcs_version(self):  # pylint: disable=no-self-use
         """
         Return the VCS version string.
         """
         return '0'
 
-    def _vcs_get_user_id(self):
+    def _vcs_get_user_id(self):  # pylint: disable=no-self-use
         """
         Get the VCS's suggested user id (e.g. "John Doe <jdoe@example.com>").
         If the VCS has not been configured with a username, return None.
@@ -376,18 +384,17 @@ class VCS (libbe.storage.base.VersionedStorage):
         return None
 
     def _vcs_detect(self, path=None):
-        """
-        Detect whether a directory is revision controlled with this VCS.
-        """
+        """ Detect whether a directory is revision controlled with this VCS.
+        """  # pylint: disable=unused-argument,no-self-use
         return True
 
-    def _vcs_root(self, path):
+    def _vcs_root(self, path):  # pylint: disable=no-self-use
         """
         Get the VCS root.  This is the default working directory for
         future invocations.  You would normally set this to the root
         directory for your VCS.
         """
-        if os.path.isdir(path) == False:
+        if not os.path.isdir(path):
             path = os.path.dirname(path)
             if path == '':
                 path = os.path.abspath('.')
@@ -397,20 +404,17 @@ class VCS (libbe.storage.base.VersionedStorage):
         """
         Begin versioning the tree based at path.
         """
-        pass
 
     def _vcs_destroy(self):
         """
         Remove any files used in versioning (e.g. whatever _vcs_init()
         created).
         """
-        pass
 
     def _vcs_add(self, path):
         """
         Add the already created file at path to version control.
         """
-        pass
 
     def _vcs_exists(self, path, revision=None):
         """
@@ -423,37 +427,38 @@ class VCS (libbe.storage.base.VersionedStorage):
         Remove the file at path from version control.  Optionally
         remove the file from the filesystem as well.
         """
-        pass
 
     def _vcs_update(self, path):
         """
         Notify the versioning system of changes to the versioned file
         at path.
         """
-        pass
 
     def _vcs_get_file_contents(self, path, revision=None):
         """
         Get the file contents as they were in a given revision.
         Revision==None specifies the current revision.
         """
-        if revision != None:
-            raise libbe.storage.base.InvalidRevision(
-                'The %s VCS does not support revision specifiers' % self.name)
+        if revision is not None:
+            msg = 'The %s VCS does not support revision specifiers' % self.name
+            raise libbe.storage.base.InvalidRevision(msg)
         path = os.path.join(self.repo, path)
+
         if not os.path.exists(path):
             return libbe.util.InvalidObject
+
         if os.path.isdir(path):
             return libbe.storage.base.InvalidDirectory
-        f = open(path, 'rb')
-        contents = f.read()
-        f.close()
+
+        with open(path, 'rb') as f:
+            contents = f.read()
+
         return contents
 
     def _vcs_path(self, id, revision):
         """
         Return the relative path to object id as of revision.
-        
+
         Revision will not be None.
         """
         raise NotImplementedError
@@ -462,7 +467,7 @@ class VCS (libbe.storage.base.VersionedStorage):
         """
         Return True if path (as returned by _vcs_path) was a directory
         as of revision, False otherwise.
-        
+
         Revision will not be None.
         """
         raise NotImplementedError
@@ -471,7 +476,7 @@ class VCS (libbe.storage.base.VersionedStorage):
         """
         Return a list of the contents of the directory path (as
         returned by _vcs_path) as of revision.
-        
+
         Revision will not be None, and ._vcs_isdir(path, revision)
         will be True.
         """
@@ -485,7 +490,7 @@ class VCS (libbe.storage.base.VersionedStorage):
 
         If allow_empty == False, raise EmptyCommit if there are no
         changes to commit.
-        """
+        """  # pylint: disable=no-self-use
         return None
 
     def _vcs_revision_id(self, index):
@@ -496,7 +501,7 @@ class VCS (libbe.storage.base.VersionedStorage):
 
         Return None if revision IDs are not supported, or if the
         specified revision does not exist.
-        """
+        """  # pylint: disable=unused-argument,no-self-use
         return None
 
     def _diff(self, revision):
@@ -515,7 +520,7 @@ class VCS (libbe.storage.base.VersionedStorage):
 
     def version(self):
         # Cache version string for efficiency.
-        if not hasattr(self, '_version'):
+        if self._version is None:
             self._version = self._vcs_version()
         return self._version
 
@@ -573,7 +578,7 @@ class VCS (libbe.storage.base.VersionedStorage):
                     self._parsed_version.append(int(num))
                 except ValueError:
                     # bzr version number might contain non-numerical tags
-                    splitter = re.compile(r'[\D]') # Match non-digits
+                    splitter = re.compile(r'[\D]')  # Match non-digits
                     splits = splitter.split(num)
                     # if len(tag) > 1 some splits will be empty; remove
                     splits = [s for s in splits if s]
@@ -599,7 +604,7 @@ class VCS (libbe.storage.base.VersionedStorage):
             return 0
         elif verlen > arglen:
             if not isinstance(self._parsed_version[arglen], int):
-                return -1 # self is a prerelease
+                return -1  # self is a prerelease
 
             return 1
 
@@ -609,7 +614,7 @@ class VCS (libbe.storage.base.VersionedStorage):
         return -1
 
     def installed(self):
-        if self.version() != None:
+        if self.version() is not None:
             return True
         return False
 
@@ -622,7 +627,7 @@ class VCS (libbe.storage.base.VersionedStorage):
         """
         if not hasattr(self, 'user_id'):
             self.user_id = self._vcs_get_user_id()
-            if self.user_id == None:
+            if self.user_id is None:
                 # guess missing info
                 name = libbe.ui.util.user.get_fallback_fullname()
                 email = libbe.ui.util.user.get_fallback_email()
@@ -659,14 +664,14 @@ class VCS (libbe.storage.base.VersionedStorage):
         tree when you call "be COMMAND", it always acts as if you called
         it from the VCS root.
         """
-        if self._detect(self.repo) == False:
+        if not self._detect(self.repo):
             raise VCSUnableToRoot(self)
         root = self._vcs_root(self.repo)
         self.repo = os.path.realpath(root)
-        if os.path.isdir(self.repo) == False:
+        if not os.path.isdir(self.repo):
             self.repo = os.path.dirname(self.repo)
-        self.be_dir = os.path.join(
-            self.repo, self._cached_path_id._spacer_dirs[0])
+        self.be_dir = os.path.join(self.repo,
+                                   self._cached_path_id._spacer_dirs[0])
         self._cached_path_id.root(self.repo)
         self._rooted = True
 
@@ -681,10 +686,13 @@ class VCS (libbe.storage.base.VersionedStorage):
         """
         if not os.path.exists(self.repo) or not os.path.isdir(self.repo):
             raise VCSUnableToRoot(self)
-        if self._vcs_detect(self.repo) == False:
+
+        if not self._vcs_detect(self.repo):
             self._vcs_init(self.repo)
-        if self._rooted == False:
+
+        if not self._rooted:
             self.root()
+
         os.mkdir(self.be_dir)
         self._vcs_add(self._u_rel_path(self.be_dir))
         self._setup_storage_version()
@@ -697,7 +705,7 @@ class VCS (libbe.storage.base.VersionedStorage):
             shutil.rmtree(self.be_dir)
 
     def _connect(self):
-        if self._rooted == False:
+        if not self._rooted:
             self.root()
         if not os.path.isdir(self.be_dir):
             raise libbe.storage.base.ConnectionError(self)
@@ -708,20 +716,20 @@ class VCS (libbe.storage.base.VersionedStorage):
         self._cached_path_id.disconnect()
 
     def path(self, id, revision=None, relpath=True):
-        if revision == None:
+        if revision is None:
             path = self._cached_path_id.path(id)
-            if relpath == True:
+            if relpath:
                 return self._u_rel_path(path)
             return path
         path = self._vcs_path(id, revision)
-        if relpath == True:
+        if relpath:
             return path
         return os.path.join(self.repo, path)
 
     def _add_path(self, path, directory=False):
         relpath = self._u_rel_path(path)
         reldirs = relpath.split(os.path.sep)
-        if directory == False:
+        if not directory:
             reldirs = reldirs[:-1]
         dir = self.repo
         for reldir in reldirs:
@@ -731,7 +739,7 @@ class VCS (libbe.storage.base.VersionedStorage):
                 self._vcs_add(self._u_rel_path(dir))
             elif not os.path.isdir(dir):
                 raise libbe.storage.base.InvalidDirectory
-        if directory == False:
+        if not directory:
             if not os.path.exists(path):
                 open(path, 'w').close()
             self._vcs_add(self._u_rel_path(path))
@@ -741,19 +749,19 @@ class VCS (libbe.storage.base.VersionedStorage):
         self._add_path(path, **kwargs)
 
     def _exists(self, id, revision=None):
-        if revision == None:
+        if revision is None:
             try:
                 path = self.path(id, revision, relpath=False)
-            except InvalidID, e:
+            except InvalidID:
                 return False
             return os.path.exists(path)
         path = self.path(id, revision, relpath=True)
-        return self._vcs_exists(relpath, revision)
+        return self._vcs_exists(path, revision)
 
     def _remove(self, id):
         path = self._cached_path_id.path(id)
         if os.path.exists(path):
-            if os.path.isdir(path) and len(self.children(id)) > 0:
+            if os.path.isdir(path) and self.children(id):
                 raise libbe.storage.base.DirectoryNotEmpty(id)
             self._vcs_remove(self._u_rel_path(path))
             if os.path.exists(path):
@@ -765,22 +773,22 @@ class VCS (libbe.storage.base.VersionedStorage):
 
     def _recursive_remove(self, id):
         path = self._cached_path_id.path(id)
-        for dirpath,dirnames,filenames in os.walk(path, topdown=False):
+        for dirpath, dirnames, filenames in os.walk(path, topdown=False):
             filenames.extend(dirnames)
             for f in filenames:
                 fullpath = os.path.join(dirpath, f)
-                if os.path.exists(fullpath) == False:
+                if not os.path.exists(fullpath):
                     continue
                 self._vcs_remove(self._u_rel_path(fullpath))
         if os.path.exists(path):
             shutil.rmtree(path)
         path = self._cached_path_id.path(id, relpath=True)
-        for id,p in self._cached_path_id._cache.items():
-            if p.startswith(path):
-                self._cached_path_id.remove_id(id)
+        for _id, cache_path in self._cached_path_id._cache.items():
+            if cache_path.startswith(path):
+                self._cached_path_id.remove_id(_id)
 
     def _ancestors(self, id=None, revision=None):
-        if id==None:
+        if id is None:
             path = self.be_dir
         else:
             path = self.path(id, revision, relpath=False)
@@ -793,37 +801,45 @@ class VCS (libbe.storage.base.VersionedStorage):
                 id = self._u_path_to_id(path)
                 ancestors.append(id)
             except (SpacerCollision, InvalidPath):
-                pass    
+                pass
         return ancestors
 
     def _children(self, id=None, revision=None):
-        if revision == None:
+        if revision is None:
             isdir = os.path.isdir
             listdir = os.listdir
         else:
-            isdir = lambda path : self._vcs_isdir(
+            isdir = lambda path: self._vcs_isdir(
                 self._u_rel_path(path), revision)
-            listdir = lambda path : self._vcs_listdir(
+            listdir = lambda path: self._vcs_listdir(
                 self._u_rel_path(path), revision)
-        if id==None:
+
+        if id is None:
             path = self.be_dir
         else:
             path = self.path(id, revision, relpath=False)
-        if isdir(path) == False: 
+
+        if not isdir(path):
             return []
+
         children = listdir(path)
-        for i,c in enumerate(children):
-            if c in self._cached_path_id._spacer_dirs:
+
+        for i, child in enumerate(children):
+            if child in self._cached_path_id._spacer_dirs:
                 children[i] = None
-                children.extend([os.path.join(c, c2) for c2 in
-                                 listdir(os.path.join(path, c))])
-            elif c in ['id-cache', 'version']:
+                cache_files = listdir(os.path.join(path, child))
+                children.extend([os.path.join(child, c2) for c2 in cache_files])
+            elif child in ['id-cache', 'version']:
                 children[i] = None
-        for i,c in enumerate(children):
-            if c == None: continue
-            cpath = os.path.join(path, c)
+
+        for i, child in enumerate(children):
+            if child is None:
+                continue
+
+            cpath = os.path.join(path, child)
             children[i] = self._u_path_to_id(cpath)
-        return [c for c in children if c != None]
+
+        return [c for c in children if c is not None]
 
     def _get(self, id, default=libbe.util.InvalidObject, revision=None):
         try:
@@ -833,9 +849,9 @@ class VCS (libbe.storage.base.VersionedStorage):
             if default == libbe.util.InvalidObject:
                 raise e
             return default
+
         if contents in [libbe.storage.base.InvalidDirectory,
-                        libbe.util.InvalidObject] \
-                or len(contents) == 0:
+                        libbe.util.InvalidObject] or not contents:
             if default == libbe.util.InvalidObject:
                 raise InvalidID(id, revision)
             return default
@@ -844,15 +860,17 @@ class VCS (libbe.storage.base.VersionedStorage):
     def _set(self, id, value):
         try:
             path = self._cached_path_id.path(id)
-        except InvalidID, e:
+        except InvalidID:
             raise
+
         if not os.path.exists(path):
             raise InvalidID(id)
-        if os.path.isdir(path):
+        elif os.path.isdir(path):
             raise libbe.storage.base.InvalidDirectory(id)
-        f = open(path, "wb")
-        f.write(value)
-        f.close()
+
+        with open(path, "wb") as f:
+            f.write(value)
+
         self._vcs_update(self._u_rel_path(path))
 
     def _commit(self, summary, body=None, allow_empty=False):
@@ -872,38 +890,42 @@ class VCS (libbe.storage.base.VersionedStorage):
         return revision
 
     def revision_id(self, index=None):
-        if index == None:
+        if index is None:
             return None
+
         try:
             if int(index) != index:
                 raise InvalidRevision(index)
         except ValueError:
             raise InvalidRevision(index)
+
         revid = self._vcs_revision_id(index)
-        if revid == None:
+        if revid is None:
             raise libbe.storage.base.InvalidRevision(index)
         return revid
 
     def changed(self, revision):
-        new,mod,rem = self._vcs_changed(revision)
+        add, mod, rem = self._vcs_changed(revision)
+
         def paths_to_ids(paths):
             for p in paths:
                 try:
-                    id = self._u_path_to_id(p)
-                    yield id
+                    _id = self._u_path_to_id(p)
+                    yield _id
                 except (SpacerCollision, InvalidPath):
                     pass
-        new_id = list(paths_to_ids(new))
+
+        add_id = list(paths_to_ids(add))
         mod_id = list(paths_to_ids(mod))
         rem_id = list(paths_to_ids(rem))
-        return (new_id, mod_id, rem_id)
+        return (add_id, mod_id, rem_id)
 
-    def _u_any_in_string(self, list, string):
+    def _u_any_in_string(self, str_list, string):
         """Return True if any of the strings in list are in string.
         Otherwise return False.
         """
-        for list_string in list:
-            if list_string in string:
+        for txt in str_list:
+            if txt in string:
                 return True
         return False
 
@@ -931,10 +953,10 @@ class VCS (libbe.storage.base.VersionedStorage):
           /a/.be
           /.be
         or None if none of those files exist.
-        """
+        """  # pylint: disable=no-self-use
         try:
             ret = search_parent_directories(path, filename)
-        except AssertionError, e:
+        except AssertionError:
             return None
         return ret
 
@@ -951,10 +973,10 @@ class VCS (libbe.storage.base.VersionedStorage):
             if not file.startswith(be_dir+os.path.sep):
                 continue
             parts = file.split(os.path.sep)
-            dir = parts.pop(0) # don't add the first spacer dir
+            dir = parts.pop(0)  # don't add the first spacer dir
             for part in parts[:-1]:
                 dir = os.path.join(dir, part)
-                if not dir in files:
+                if dir not in files:
                     files.append(dir)
         for file in files:
             try:
@@ -970,14 +992,14 @@ class VCS (libbe.storage.base.VersionedStorage):
 
         Returns None if the id is not found.
         """
-        assert self._rooted == True
+        assert self._rooted
         be_dir = self._cached_path_id._spacer_dirs[0]
         stack = [(be_dir, be_dir)]
-        while len(stack) > 0:
-            path,long_id = stack.pop()
+        while stack:
+            path, long_id = stack.pop()
             if long_id.endswith('/'+id):
                 return path
-            if self._vcs_isdir(path, revision) == False:
+            if not self._vcs_isdir(path, revision):
                 continue
             for child in self._vcs_listdir(path, revision):
                 stack.append((os.path.join(path, child),
@@ -1002,19 +1024,20 @@ class VCS (libbe.storage.base.VersionedStorage):
         >>> vcs._u_rel_path("./a", ".")
         'a'
         """
-        if root == None:
-            if self.repo == None:
+        if root is None:
+            if self.repo is None:
                 raise VCSNotRooted(self)
             root = self.repo
+
         path = os.path.abspath(path)
-        absRoot = os.path.abspath(root)
-        absRootSlashedDir = os.path.join(absRoot,"")
-        if path in [absRoot, absRootSlashedDir]:
+        abs_root = os.path.abspath(root)
+        abs_root_slashed_dir = os.path.join(abs_root, "")
+        if path in [abs_root, abs_root_slashed_dir]:
             return '.'
-        if not path.startswith(absRootSlashedDir):
-            raise InvalidPath(path, absRootSlashedDir)
-        relpath = path[len(absRootSlashedDir):]
-        return relpath
+        elif not path.startswith(abs_root_slashed_dir):
+            raise InvalidPath(path, abs_root_slashed_dir)
+
+        return path[len(abs_root_slashed_dir):]
 
     def _u_abspath(self, path, root=None):
         """Return the absolute path from a path relative to root.
@@ -1026,8 +1049,8 @@ class VCS (libbe.storage.base.VersionedStorage):
         >>> vcs._u_abspath(".be", "/a.b/c")
         '/a.b/c/.be'
         """
-        if root == None:
-            assert self.repo != None, "VCS not rooted"
+        if root is None:
+            assert self.repo is not None, "VCS not rooted"
             root = self.repo
         return os.path.abspath(os.path.join(root, path))
 
@@ -1035,13 +1058,13 @@ class VCS (libbe.storage.base.VersionedStorage):
         """Split the commitfile created in self.commit() back into summary and
         header lines.
         """
-        f = codecs.open(commitfile, 'r', self.encoding)
-        summary = f.readline()
-        body = f.read()
-        body.lstrip('\n')
-        if len(body) == 0:
-            body = None
-        f.close()
+        with codecs.open(commitfile, 'r', self.encoding) as f:
+            summary = f.readline()
+            body = f.read()
+            body.lstrip('\n')
+            if not body:
+                body = None
+
         return (summary, body)
 
     def check_storage_version(self):
@@ -1056,24 +1079,25 @@ class VCS (libbe.storage.base.VersionedStorage):
         --------
         libbe.storage.util.upgrade
         """
-        if path == None:
+        if path is None:
             path = os.path.join(self.repo, '.be', 'version')
-        if not os.path.exists(path):
+        elif not os.path.exists(path):
             raise libbe.storage.InvalidStorageVersion(None)
-        if revision == None: # don't require connection
+
+        if revision is None:  # don't require connection
             return libbe.util.encoding.get_file_contents(
                 path, decode=True).rstrip()
+
         relpath = self._u_rel_path(path)
         contents = self._vcs_get_file_contents(relpath, revision=revision)
-        if type(contents) != types.UnicodeType:
+        if not isinstance(contents, unicode):
             contents = unicode(contents, self.encoding)
+
         return contents.strip()
 
     def _setup_storage_version(self):
-        """
-        Requires disk access.
-        """
-        assert self._rooted == True
+        """ Requires disk access.  """
+        assert self._rooted
         path = os.path.join(self.be_dir, 'version')
         if not os.path.exists(path):
             libbe.util.encoding.set_file_contents(path,
@@ -1081,8 +1105,8 @@ class VCS (libbe.storage.base.VersionedStorage):
             self._vcs_add(self._u_rel_path(path))
 
 
-if libbe.TESTING == True:
-    class VCSTestCase (unittest.TestCase):
+if libbe.TESTING:
+    class VCSTestCase(unittest.TestCase):
         """
         Test cases for base VCS class (in addition to the Storage test
         cases).
@@ -1095,79 +1119,75 @@ if libbe.TESTING == True:
             self.dirname = None
 
         def setUp(self):
-            """Set up test fixtures for Storage test case."""
+            """ Set up test fixtures for Storage test case. """
             super(VCSTestCase, self).setUp()
             self.dir = Dir()
             self.dirname = self.dir.path
             self.s = self.Class(repo=self.dirname)
-            if self.s.installed() == True:
+            if self.s.installed():
                 self.s.init()
                 self.s.connect()
 
         def tearDown(self):
             super(VCSTestCase, self).tearDown()
-            if self.s.installed() == True:
+            if self.s.installed():
                 self.s.disconnect()
                 self.s.destroy()
             self.dir.cleanup()
 
-    class VCS_installed_TestCase (VCSTestCase):
+    class VCS_installed_TestCase(VCSTestCase):
         def test_installed(self):
-            """See if the VCS is installed.
-            """
+            """ See if the VCS is installed. """
             if not self.s.installed():
                 self.skipTest('%(name)s VCS not found' % vars(self.Class))
 
-
-    class VCS_detection_TestCase (VCSTestCase):
+    class VCS_detection_TestCase(VCSTestCase):
         def test_detection(self):
-            """See if the VCS detects its installed repository
-            """
+            """ See if the VCS detects its installed repository """
             if self.s.installed():
                 self.s.disconnect()
-                self.failUnless(self.s._detect(self.dirname) == True,
-                    'Did not detected %(name)s VCS after initialising'
-                    % vars(self.Class))
+                msg = 'Did not detected %(name)s VCS after initialising'
+                self.failUnless(self.s._detect(self.dirname), msg
+                                % vars(self.Class))
                 self.s.connect()
 
         def test_no_detection(self):
-            """See if the VCS detects its installed repository
-            """
+            """ See if the VCS detects its installed repository """
             if self.s.installed() and self.Class.name != 'None':
                 self.s.disconnect()
                 self.s.destroy()
-                self.failUnless(self.s._detect(self.dirname) == False,
-                    'Detected %(name)s VCS before initialising'
-                    % vars(self.Class))
+                msg = 'Detected %(name)s VCS before initialising'
+                self.failUnless(not self.s._detect(self.dirname), msg
+                                % vars(self.Class))
                 self.s.init()
                 self.s.connect()
 
         def test_vcs_repo_in_specified_root_path(self):
-            """VCS root directory should be in specified root path."""
+            """ VCS root directory should be in specified root path. """
             rp = os.path.realpath(self.s.repo)
             dp = os.path.realpath(self.dirname)
             vcs_name = self.Class.name
             self.failUnless(
-                dp == rp or rp == None,
+                dp == rp or rp is None,
                 "%(vcs_name)s VCS root in wrong dir (%(dp)s %(rp)s)" % vars())
 
     class VCS_get_user_id_TestCase(VCSTestCase):
-        """Test cases for VCS.get_user_id method."""
+        """ Test cases for VCS.get_user_id method. """
 
         def test_get_existing_user_id(self):
-            """Should get the existing user ID."""
+            """ Should get the existing user ID. """
             if self.s.installed():
                 user_id = self.s.get_user_id()
-                if user_id == None:
+                if user_id is None:
                     return
-                name,email = libbe.ui.util.user.parse_user_id(user_id)
-                if email != None:
+                _, email = libbe.ui.util.user.parse_user_id(user_id)
+                if email is not None:
                     self.failUnless('@' in email, email)
 
     def make_vcs_testcase_subclasses(vcs_class, namespace):
         c = vcs_class()
         if c.installed():
-            if c.versioned == True:
+            if c.versioned:
                 libbe.storage.base.make_versioned_storage_testcase_subclasses(
                     vcs_class, namespace)
             else:
@@ -1176,22 +1196,21 @@ if libbe.TESTING == True:
 
         if namespace != sys.modules[__name__]:
             # Make VCSTestCase subclasses for vcs_class in the namespace.
-            vcs_testcase_classes = [
-                c for c in (
-                    ob for ob in globals().values() if isinstance(ob, type))
-                if issubclass(c, VCSTestCase) \
-                    and c.Class == VCS]
+            vcs_testcase_classes = [c for c in (ob for ob in globals().values()
+                                                if isinstance(ob, type))
+                                    if issubclass(c, VCSTestCase)
+                                    and c.Class == VCS]
 
             for base_class in vcs_testcase_classes:
                 testcase_class_name = vcs_class.__name__ + base_class.__name__
                 testcase_class_bases = (base_class,)
                 testcase_class_dict = dict(base_class.__dict__)
                 testcase_class_dict['Class'] = vcs_class
-                testcase_class = type(
-                    testcase_class_name, testcase_class_bases, testcase_class_dict)
+                testcase_class = type(testcase_class_name, testcase_class_bases,
+                                      testcase_class_dict)
                 setattr(namespace, testcase_class_name, testcase_class)
 
     make_vcs_testcase_subclasses(VCS, sys.modules[__name__])
 
-    unitsuite =unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
+    unitsuite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
     suite = unittest.TestSuite([unitsuite, doctest.DocTestSuite()])
