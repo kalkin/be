@@ -104,31 +104,33 @@ def parse_status(status):
             status, libbe.bug.status_values)
     return status
 
+
 def parse_severity(severity, important=False):
-    if important == True:
+    if important:
         serious = libbe.bug.severity_values.index('serious')
         severity = list(libbe.bug.severity_values[serious:])
     elif severity == 'all':
         severity = libbe.bug.severity_values
     else:
-        severity = libbe.command.util.select_values(
-            severity, libbe.bug.severity_values)
+        severity = libbe.command.util.select_values(severity,
+                                                    libbe.bug.severity_values)
     return severity
 
 
-class BrokenLink (Exception):
+class BrokenLink(Exception):
     def __init__(self, blocked_bug, blocking_bug, blocks=True):
-        if blocks == True:
+        if blocks:
             msg = "Missing link: %s blocks %s" \
                 % (blocking_bug.id.user(), blocked_bug.id.user())
         else:
             msg = "Missing link: %s blocked by %s" \
                 % (blocked_bug.id.user(), blocking_bug.id.user())
-        Exception.__init__(self, msg)
+        super(BrokenLink, self).__init__(msg)
         self.blocked_bug = blocked_bug
         self.blocking_bug = blocking_bug
 
-class Depend (libbe.command.Command):
+
+class Depend(libbe.command.Command):
     """Add/remove bug dependencies
 
     >>> import sys
@@ -236,6 +238,7 @@ class Depend (libbe.command.Command):
                                (blockee.id.user(), blocker.id.user())
                                for blockee, blocker in fixed])
             return 0
+
         status = parse_status(params['status'])
         severity = parse_severity(params['severity'])
         _filter = Filter(status, severity)
@@ -325,19 +328,24 @@ The "|--" symbol in the repair-mode output is inspired by the
 
 # internal helper functions
 
+
 def _generate_blocks_string(blocked_bug):
     return '%s%s' % (BLOCKS_TAG, blocked_bug.uuid)
 
+
 def _generate_blocked_by_string(blocking_bug):
     return '%s%s' % (BLOCKED_BY_TAG, blocking_bug.uuid)
+
 
 def _parse_blocks_string(string):
     assert string.startswith(BLOCKS_TAG)
     return string[len(BLOCKS_TAG):]
 
+
 def _parse_blocked_by_string(string):
     assert string.startswith(BLOCKED_BY_TAG)
     return string[len(BLOCKED_BY_TAG):]
+
 
 def _add_remove_extra_string(bug, string, add):
     estrs = bug.extra_strings
@@ -347,6 +355,7 @@ def _add_remove_extra_string(bug, string, add):
         estrs.remove(string)
     bug.extra_strings = estrs # reassign to notice change
 
+
 def _get_blocks(bug):
     uuids = []
     for line in bug.extra_strings:
@@ -354,12 +363,14 @@ def _get_blocks(bug):
             uuids.append(_parse_blocks_string(line))
     return uuids
 
+
 def _get_blocked_by(bug):
     uuids = []
     for line in bug.extra_strings:
         if line.startswith(BLOCKED_BY_TAG):
             uuids.append(_parse_blocked_by_string(line))
     return uuids
+
 
 def _repair_one_way_link(blocked_bug, blocking_bug, blocks=None):
     if blocks == True: # add blocks link
