@@ -598,6 +598,7 @@ class Diff (object):
                     for node in bug_node.traverse():
                         node.masked = True
         return root
+
     def report_tree(self, subscriptions=None, diff_tree=DiffTree,
                     allow_cached=True):
         """
@@ -605,74 +606,77 @@ class Diff (object):
         can pass in a DiffTree subclass via diff_tree to override the
         default report assembly process.
         """
-        if allow_cached == True \
-                and hasattr(self, '_cached_full_report') \
+        if allow_cached and hasattr(self, '_cached_full_report')\
                 and diff_tree == self._cached_full_report_diff_tree:
             return self._sub_report(subscriptions)
-        if subscriptions == None:
+
+        if subscriptions is None:
             subscriptions = [Subscription(BUGDIR_ID, BUGDIR_TYPE_ALL)]
-        bugdir_settings = sorted(self.new_bugdir.settings_properties)
+
         root = diff_tree('bugdir')
         bugdir_subscriptions = [s.type for s in subscriptions
                                 if s.id == BUGDIR_ID]
         if BUGDIR_TYPE_ALL in bugdir_subscriptions:
             bugdir_attribute_changes = self._bugdir_attribute_changes()
-            if len(bugdir_attribute_changes) > 0:
+            if bugdir_attribute_changes:
                 bugdir = diff_tree('settings', bugdir_attribute_changes,
                                    self.bugdir_attribute_change_string)
                 root.append(bugdir)
+
         bug_root = diff_tree('bugs')
         root.append(bug_root)
-        add,mod,rem = self._changed_bugs(subscriptions)
+        add, mod, rem = self._changed_bugs(subscriptions)
         bnew = diff_tree('new', 'New bugs:', requires_children=True)
+        bnew += [diff_tree(bug.uuid, bug, self.bug_add_string) for bug in add]
         bug_root.append(bnew)
-        for bug in add:
-            b = diff_tree(bug.uuid, bug, self.bug_add_string)
-            bnew.append(b)
+
         brem = diff_tree('rem', 'Removed bugs:', requires_children=True)
+        brem += [diff_tree(bug.uuid, bug, self.bug_rem_string) for bug in rem]
         bug_root.append(brem)
-        for bug in rem:
-            b = diff_tree(bug.uuid, bug, self.bug_rem_string)
-            brem.append(b)
+
         bmod = diff_tree('mod', 'Modified bugs:', requires_children=True)
         bug_root.append(bmod)
-        for old,new in mod:
-            b = diff_tree(new.uuid, (old,new), self.bug_mod_string)
-            bmod.append(b)
+
+        for old, new in mod:
+            bugs = diff_tree(new.uuid, (old, new), self.bug_mod_string)
+            bmod.append(bugs)
             bug_attribute_changes = self._bug_attribute_changes(old, new)
-            if len(bug_attribute_changes) > 0:
-                bset = diff_tree('settings', bug_attribute_changes,
-                                 self.bug_attribute_change_string)
-                b.append(bset)
+
+            if bug_attribute_changes:
+                bugs += [diff_tree('settings', bug_attribute_changes,
+                                   self.bug_attribute_change_string)]
+
             if old.summary != new.summary:
-                data = (old.summary, new.summary)
-                bsum = diff_tree('summary', data, self.bug_summary_change_string)
-                b.append(bsum)
-            cr = diff_tree('comments')
-            b.append(cr)
-            a,m,d = self._changed_comments(old, new)
+                bugs += [diff_tree('summary', (old.summary, new.summary),
+                                   self.bug_summary_change_string)]
+
+            comment_root = diff_tree('comments')
+            bugs.append(comment_root)
+            add_c, mod_c, del_c = self._changed_comments(old, new)
+
             cnew = diff_tree('new', 'New comments:', requires_children=True)
-            for comment in a:
-                c = diff_tree(comment.uuid, comment, self.comment_add_string)
-                cnew.append(c)
-            crem = diff_tree('rem', 'Removed comments:',requires_children=True)
-            for comment in d:
-                c = diff_tree(comment.uuid, comment, self.comment_rem_string)
-                crem.append(c)
-            cmod = diff_tree('mod','Modified comments:',requires_children=True)
-            for o,n in m:
-                c = diff_tree(n.uuid, (o,n), self.comment_mod_string)
+            for comment in add_c:
+                cnew += [diff_tree(comment.uuid, comment,
+                                   self.comment_add_string)]
+
+            crem = diff_tree('rem', 'Removed comments:',
+                             requires_children=True)
+            for comment in del_c:
+                crem += [diff_tree(comment.uuid, comment,
+                                   self.comment_rem_string)]
+
+            cmod = diff_tree('mod', 'Modified comments:', requires_children=True)
+            for o, n in mod_c:
+                c = diff_tree(n.uuid, (o, n), self.comment_mod_string)
                 cmod.append(c)
-                comm_attribute_changes = self._comment_attribute_changes(o, n)
-                if len(comm_attribute_changes) > 0:
-                    cset = diff_tree('settings', comm_attribute_changes,
-                                     self.comment_attribute_change_string)
                 if o.body != n.body:
                     data = (o.body, n.body)
                     cbody = diff_tree('cbody', data,
                                       self.comment_body_change_string)
                     c.append(cbody)
-            cr.extend([cnew, crem, cmod])
+
+            comment_root.extend([cnew, crem, cmod])
+
         return root
 
     # change data -> string methods.
