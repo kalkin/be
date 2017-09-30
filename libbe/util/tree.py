@@ -22,8 +22,10 @@
 """
 
 import libbe
-if libbe.TESTING == True:
+
+if libbe.TESTING:
     import doctest
+
 
 class Tree(list):
     """A traversable tree structure.
@@ -141,10 +143,10 @@ class Tree(list):
         Use only on small trees, or reimplement by overriding
         child-addition methods to allow accurate caching.
         """
-        if len(self) == 0:
+        if not self:
             return 1
-        else:
-            return 1 + max([child.branch_len() for child in self])
+
+        return 1 + max([child.branch_len() for child in self])
 
     def sort(self, *args, **kwargs):
         """Sort the tree recursively.
@@ -172,66 +174,64 @@ class Tree(list):
           in the order they are stored, so you might want to
           :py:meth:`sort` your tree first.
         """
-        if depth_first == True:
+        if depth_first:
             yield self
             for child in self:
                 for descendant in child.traverse():
                     yield descendant
-        else: # breadth first, Wikipedia algorithm
+        else:  # breadth first, Wikipedia algorithm
             # http://en.wikipedia.org/wiki/Breadth-first_search
             queue = [self]
-            while len(queue) > 0:
+            while queue:
                 node = queue.pop(0)
                 yield node
                 queue.extend(node)
 
     def thread(self, flatten=False):
-        """Generate a (depth, node) tuple for every node in the tree.
+        """ Generate a (depth, node) tuple for every node in the tree.
 
-        When `flatten` is `False`, the depth of any node is one
-        greater than the depth of its parent.  That way the
-        inheritance is explicit, but you can end up with highly
-        indented threads.
+            When `flatten` is `False`, the depth of any node is one greater than
+            the depth of its parent.  That way the inheritance is explicit, but
+            you can end up with highly indented threads.
 
-        When `flatten` is `True`, the depth of any node is only
-        greater than the depth of its parent when there is a branch,
-        and the node is not the last child.  This can lead to ancestry
-        ambiguity, but keeps the total indentation down.  For example::
+            When `flatten` is `True`, the depth of any node is only greater than
+            the depth of its parent when there is a branch, and the node is not
+            the last child.  This can lead to ancestry ambiguity, but keeps the
+            total indentation down.  For example::
 
                       +-b                  +-b-c
                     a-+-c        and     a-+
                       +-d-e-f              +-d-e-f
 
-        would both produce (after sorting by :py:meth:`branch_len`)::
+            would both produce (after sorting by :py:meth:`branch_len`)::
 
-            (0, a)
-            (1, b)
-            (1, c)
-            (0, d)
-            (0, e)
-            (0, f)
-
+                (0, a)
+                (1, b)
+                (1, c)
+                (0, d)
+                (0, e)
+                (0, f)
         """
-        stack = [] # ancestry of the current node
-        if flatten == True:
-            depthDict = {}
+        stack = []  # ancestry of the current node
+        if flatten:
+            depth_dict = {}
 
         for node in self.traverse(depth_first=True):
-            while len(stack) > 0 \
-                    and id(node) not in [id(c) for c in stack[-1]]:
+            while stack and id(node) not in [id(c) for c in stack[-1]]:
                 stack.pop(-1)
-            if flatten == False:
+
+            if not flatten:
                 depth = len(stack)
             else:
-                if len(stack) == 0:
+                if not stack:
                     depth = 0
                 else:
                     parent = stack[-1]
-                    depth = depthDict[id(parent)]
+                    depth = depth_dict[id(parent)]
                     if len(parent) > 1 and node != parent[-1]:
                         depth += 1
-                depthDict[id(node)] = depth
-            yield (depth,node)
+                depth_dict[id(node)] = depth
+            yield (depth, node)
             stack.append(node)
 
     def has_descendant(self, descendant, depth_first=True, match_self=False):
@@ -251,10 +251,11 @@ class Tree(list):
         """
         if descendant == self:
             return match_self
-        for d in self.traverse(depth_first):
-            if descendant == d:
+        for node in self.traverse(depth_first):
+            if descendant == node:
                 return True
         return False
 
-if libbe.TESTING == True:
-    suite = doctest.DocTestSuite()
+
+if libbe.TESTING:
+    doctest.DocTestSuite()
