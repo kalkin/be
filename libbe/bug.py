@@ -25,24 +25,19 @@
 """
 
 import copy
-import os
-import os.path
-import errno
-import sys
 import time
 import types
-from xml.etree import ElementTree
 import xml.sax.saxutils
+from xml.etree import ElementTree
 
 import libbe
-import libbe.util.id
-from libbe.storage.util.properties import Property, doc_property, \
-    local_property, defaulting_property, checked_property, cached_property, \
-    primed_property, change_hook_property, settings_property
-import libbe.storage.util.settings_object as settings_object
-import libbe.storage.util.mapfile as mapfile
 import libbe.comment as comment
+import libbe.storage.util.mapfile as mapfile
+import libbe.storage.util.settings_object as settings_object
+import libbe.util.id
 import libbe.util.utility as utility
+from libbe.storage.util.properties import (Property, cached_property,
+                                           doc_property, local_property)
 
 if libbe.TESTING == True:
     import doctest
