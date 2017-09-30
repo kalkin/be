@@ -83,40 +83,25 @@ def complete_bug_id(command, argument, fragment=None):
     return complete_bug_comment_id(command, argument, fragment,
                                    comments=False)
 
-def complete_bug_comment_id(command, argument, fragment=None,
-                            active_only=True, comments=True):
+def complete_bug_comment_id(command, _, fragment=None, comments=True):
+    # pylint: disable=missing-docstring
     import libbe.bugdir
     import libbe.util.id
-    bugdirs = command._get_bugdirs()
-    if fragment == None or len(fragment) == 0:
-        fragment = '/'
-    try:
-        p = libbe.util.id.parse_user(bugdirs, fragment)
-        matches = None
-        root,residual = (fragment, None)
-        if not root.endswith('/'):
-            root += '/'
-    except libbe.util.id.InvalidIDStructure, e:
-        return []
-    except libbe.util.id.NoIDMatches:
-        return []
-    except libbe.util.id.MultipleIDMatches, e:
-        if e.common == None:
-            # choose among bugdirs
-            return e.matches
-        common = e.common
-        matches = e.matches
-        root,residual = libbe.util.id.residual(common, fragment)
-        p = libbe.util.id.parse_user(bugdirs, e.common)
+    bugdirs = command._get_bugdirs()  # pylint: disable=protected-access
+    p, matches, root = _data(bugdirs, fragment)
+
     bug = None
-    if matches == None: # fragment was complete, get a list of children uuids
+    if p is None:
+        return matches
+    elif matches is None:
+        # fragment was complete, get a list of children uuids
         if p['type'] == 'bugdir':
             bugdir = bugdirs[p['bugdir']]
             matches = bugdir.uuids()
             common = bugdir.id.user()
+        elif p['type'] == 'bug' and not comments:
+            return [fragment]
         elif p['type'] == 'bug':
-            if comments == False:
-                return [fragment]
             bugdir = bugdirs[p['bugdir']]
             bug = bugdir.bug_from_uuid(p['bug'])
             matches = bug.uuids()
@@ -124,26 +109,55 @@ def complete_bug_comment_id(command, argument, fragment=None,
         else:
             assert p['type'] == 'comment', p
             return [fragment]
+
+    child_fn = None
     if p['type'] == 'bugdir':
         bugdir = bugdirs[p['bugdir']]
         child_fn = bugdir.bug_from_uuid
+    elif p['type'] == 'bug' and not comments:
+        return[fragment]
     elif p['type'] == 'bug':
-        if comments == False:
-            return[fragment]
         bugdir = bugdirs[p['bugdir']]
-        if bug == None:
+        if bug is None:
             bug = bugdir.bug_from_uuid(p['bug'])
         child_fn = bug.comment_from_uuid
     elif p['type'] == 'comment':
-        assert matches == None, matches
+        assert matches is None, matches
         return [fragment]
-    possible = []
+
+    return _gather_matches(matches, common, root, child_fn)
+
+
+def _data(bugdirs, fragment=None):  # pylint: disable=missing-docstring
+    try:
+        p = libbe.util.id.parse_user(bugdirs, fragment)
+        matches = None
+        root, _ = (fragment, None)
+        if not root.endswith('/'):
+            root += '/'
+    except libbe.util.id.MultipleIDMatches, e:
+        if e.common is None:
+            # choose among bugdirs
+            return (None, e.matches, None)
+        matches = e.matches
+        root, _ = libbe.util.id.residual(e.common, fragment)
+        p = libbe.util.id.parse_user(bugdirs, e.common)
+    except (libbe.util.id.InvalidIDStructure, libbe.util.id.NoIDMatches):
+        return (None, [], None)
+
+    return (p, matches, root)
+
+
+def _gather_matches(matches, common, root, child_fn=None):
+    # pylint: disable=missing-docstring
     common += '/'
-    for m in matches:
-        child = child_fn(m)
-        id = child.id.user()
-        possible.append(id.replace(common, root))
+    possible = []
+    for match in matches:
+        child = child_fn(match)
+        _id = child.id.user()
+        possible.append(_id.replace(common, root))
     return possible
+
 
 def select_values(string, possible_values, name="unkown"):
     """
