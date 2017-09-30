@@ -39,7 +39,7 @@ import libbe.util.utility as utility
 from libbe.storage.util.properties import (Property, cached_property,
                                            doc_property, local_property)
 
-if libbe.TESTING == True:
+if libbe.TESTING:
     import doctest
 
 
@@ -98,16 +98,16 @@ def load_status(active_status_def, inactive_status_def):
     global status_values
     global status_description
     global status_index
-    if active_status_def == None:
+    if active_status_def is None:
         active_status_def = globals()["active_status_def"]
-    if inactive_status_def == None:
+    if inactive_status_def is None:
         inactive_status_def = globals()["inactive_status_def"]
-    active_status_values = tuple([val for val,description in active_status_def])
-    inactive_status_values = tuple([val for val,description in inactive_status_def])
+    active_status_values = tuple([val for val, description in active_status_def])
+    inactive_status_values = tuple([val for val, description in inactive_status_def])
     status_values = active_status_values + inactive_status_values
     status_description = dict(tuple(active_status_def) + tuple(inactive_status_def))
     status_index = {}
-    for i,status in enumerate(status_values):
+    for i, status in enumerate(status_values):
         status_index[status] = i
 load_status(active_status_def, inactive_status_def)
 
@@ -189,20 +189,22 @@ class Bug (settings_object.SavedSettingsObject):
     def time_string(): return {}
 
     def _get_time(self):
-        if self.time_string == None:
+        if self.time_string is None:
             self._cached_time_string = None
             self._cached_time = None
             return None
-        if (not hasattr(self, '_cached_time_string')
-            or self.time_string != self._cached_time_string):
+        if (not hasattr(self, '_cached_time_string') or
+                self.time_string != self._cached_time_string):
             self._cached_time_string = self.time_string
             self._cached_time = utility.str_to_time(self.time_string)
         return self._cached_time
+
     def _set_time(self, value):
         if not hasattr(self, '_cached_time') or value != self._cached_time:
             self.time_string = utility.time_to_str(value)
             self._cached_time_string = self.time_string
             self._cached_time = value
+
     time = property(fget=_get_time,
                     fset=_set_time,
                     doc="An integer version of .time_string")
