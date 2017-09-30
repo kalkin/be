@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU General Public License along with
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Automatic pager for terminal output (a la Git).
-"""
+""" Automatic pager for terminal output (a la Git). """
 
 import os as _os
 import select as _select
@@ -42,20 +41,8 @@ def run_pager(paginate='auto'):
         `PAGER`.  The child keeps the original stdin, and the child's stdout
         becomes the parent's stdin.  The parent keeps the original stdout.
     """
-    if (paginate == 'never' or _sys.platform == 'win32' or
-            not hasattr(_sys.stdout, 'isatty') or
-            not _sys.stdout.isatty()):
+    if pager_needed(paginate):
         return
-
-    env = dict(_os.environ)
-
-    if paginate == 'auto' and 'LESS' not in env:
-        env['LESS'] = ''  # += doesn't work on undefined var
-    elif paginate == 'auto':
-        env['LESS'] += ' '  # separate from existing variables
-    else:
-        # don't page if the input is short enough
-        env['LESS'] += '-FRX'
 
     pager = _os.environ.get('PAGER', 'less')
     args = _shlex.split(pager)
@@ -80,4 +67,27 @@ def run_pager(paginate='auto'):
 
     # Wait until we have input before we start the pager
     _select.select([0], [], [])
+
+    env = prepare_env(paginate)
     _os.execvpe(pager, args, env)
+
+
+def pager_needed(paginate):
+    """ Check if pager is needed """
+    return paginate == 'never' or _sys.platform == 'win32'\
+        or not hasattr(_sys.stdout, 'isatty')\
+        or not _sys.stdout.isatty()
+
+
+def prepare_env(paginate):
+    """ Configure LESS pager in the environment. """
+    env = dict(_os.environ)
+
+    if paginate == 'auto' and 'LESS' not in env:
+        env['LESS'] = ''  # += doesn't work on undefined var
+    elif paginate == 'auto':
+        env['LESS'] += ' '  # separate from existing variables
+    else:
+        # don't page if the input is short enough
+        env['LESS'] += '-FRX'
+    return env
