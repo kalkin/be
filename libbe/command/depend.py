@@ -18,10 +18,6 @@
 # You should have received a copy of the GNU General Public License along with
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
-import copy
-import itertools
-import os
-
 import libbe
 import libbe.bug
 import libbe.bugdir
