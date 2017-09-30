@@ -123,10 +123,11 @@ class Comment (libbe.command.Command):
 
     def _run(self, **params):
         bugdirs = self._get_bugdirs()
-        bugdir,bug,parent = (
+        _, bug, parent = (
             libbe.command.util.bugdir_bug_comment_from_user_id(
                 bugdirs, params['id']))
-        if params['comment'] == None:
+
+        if params['comment'] is None:
             # try to launch an editor for comment-body entry
             try:
                 if parent == bug.comment_root:
@@ -135,38 +136,42 @@ class Comment (libbe.command.Command):
                 else:
                     header = "From: %s\nTo: %s" % (parent.author, bug)
                     parent_body = parent.body
-                estr = 'Please enter your comment above\n\n%s\n\n> %s\n' \
-                    % (header, '\n> '.join(parent_body.splitlines()))
+
+                estr = 'Please enter your comment above\n\n%s\n\n> %s\n'\
+                       % (header, '\n> '.join(parent_body.splitlines()))
                 body = libbe.ui.util.editor.editor_string(estr)
-            except libbe.ui.util.editor.CantFindEditor, e:
-                raise libbe.command.UserError(
-                    'No comment supplied, and EDITOR not specified.')
+            except libbe.ui.util.editor.CantFindEditor:
+                msg = 'No comment supplied, and EDITOR not specified.'
+                raise libbe.command.UserError(msg)
+
             if body is None:
                 raise libbe.command.UserError('No comment entered.')
-        elif params['comment'] == '-': # read body from stdin
-            binary = not (params['content-type'] == None
-                          or params['content-type'].startswith("text/"))
-            if not binary:
+
+        elif params['comment'] == '-':  # read body from stdin
+            if not params['content-type'] is None\
+                    and not params['content-type'].startswith("text/"):
                 body = self.stdin.read()
                 if not body.endswith('\n'):
                     body += '\n'
-            else: # read-in without decoding
+            else:  # read-in without decoding
                 body = sys.stdin.read()
-        else: # body given on command line
+        else:  # body given on command line
             body = params['comment']
             if not body.endswith('\n'):
-                body+='\n'
-        if params['author'] == None:
+                body += '\n'
+        if params['author'] is None:
             params['author'] = self._get_user_id()
 
         new = parent.new_reply(body=body, content_type=params['content-type'])
         for key in ['alt-id', 'author']:
-            if params[key] != None:
+            if params[key] is not None:
                 setattr(new, new._setting_name_to_attr_name(key), params[key])
+
         if params['full-uuid']:
             comment_id = new.id.long_user()
         else:
             comment_id = new.id.user()
+
         self.stdout.write('Created comment with ID %s\n' % (comment_id))
         return 0
 
