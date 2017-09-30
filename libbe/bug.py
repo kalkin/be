@@ -26,7 +26,6 @@
 
 import copy
 import time
-import types
 import xml.sax.saxutils
 from xml.etree import ElementTree
 
@@ -43,7 +42,7 @@ if libbe.TESTING:
     import doctest
 
 
-### Define and describe valid bug categories
+# Define and describe valid bug categories
 # Use a tuple of (category, description) tuples since we don't have
 # ordered dicts in Python yet http://www.python.org/dev/peps/pep-0372/
 
@@ -69,7 +68,7 @@ inactive_status_def = (
   ("wontfix","It's not a bug, it's a feature."))
 
 
-### Convert the description tuples to more useful formats
+# Convert the description tuples to more useful formats
 
 severity_values = ()
 severity_description = {}
@@ -112,11 +111,11 @@ def load_status(active_status_def, inactive_status_def):
 load_status(active_status_def, inactive_status_def)
 
 
-class Bug (settings_object.SavedSettingsObject):
+class Bug(settings_object.SavedSettingsObject):
     """A bug (or issue) is a place to store attributes and attach
-    :py:class:`~libbe.comment.Comment`\s.  In mailing-list terms, a bug is
+    :py:class:`~libbe.comment.Comment`.  In mailing-list terms, a bug is
     analogous to a thread.  Bugs are normally stored in
-    :py:class:`~libbe.bugdir.BugDir`\s.
+    :py:class:`~libbe.bugdir.BugDir`.
 
     >>> b = Bug()
     >>> print b.status
@@ -246,16 +245,15 @@ class Bug (settings_object.SavedSettingsObject):
         self.storage = None
         self.uuid = uuid
         self.id = libbe.util.id.ID(self, 'bug')
-        if from_storage == False:
-            if uuid == None:
+        if not from_storage:
+            if uuid is None:
                 self.uuid = libbe.util.id.uuid_gen()
-            self.time = int(time.time()) # only save to second precision
+            self.time = int(time.time())  # only save to second precision
             self.summary = summary
-            dummy = self.comment_root
-        if self.bugdir != None:
+        if self.bugdir is not None:
             self.storage = self.bugdir.storage
-        if from_storage == False:
-            if self.storage != None and self.storage.is_writeable():
+        if not from_storage:
+            if self.storage is not None and self.storage.is_writeable():
                 self.save()
 
     def __repr__(self):
@@ -271,15 +269,15 @@ class Bug (settings_object.SavedSettingsObject):
 
     def _setting_attr_string(self, setting):
         value = getattr(self, setting)
-        if value == None:
+        if value is None:
             return ""
-        if type(value) not in types.StringTypes:
+        if not isinstance(value, str):
             return str(value)
         return value
 
     def string(self, shortlist=False, show_comments=False):
-        if shortlist == False:
-            if self.time == None:
+        if not shortlist:
+            if self.time is None:
                 timestring = ""
             else:
                 htime = utility.handy_time(self.time)
@@ -294,20 +292,22 @@ class Bug (settings_object.SavedSettingsObject):
                     ("Created", timestring)]
             for estr in self.extra_strings:
                 info.append(('Extra string', estr))
-            longest_key_len = max([len(k) for k,v in info])
-            infolines = ["  %*s : %s\n" %(longest_key_len,k,v) for k,v in info]
+            longest_key_len = max([len(k) for k, v in info])
+            infolines = ["  %*s : %s\n" % (longest_key_len, k, v)
+                         for k, v in info]
             bugout = "".join(infolines) + "%s" % self.summary.rstrip('\n')
         else:
             statuschar = self.status[0]
             severitychar = self.severity[0]
             chars = "%c%c" % (statuschar, severitychar)
-            bugout = "%s:%s: %s" % (self.id.user(),chars,self.summary.rstrip('\n'))
+            bugout = "%s:%s: %s" % (self.id.user(), chars,
+                                    self.summary.rstrip('\n'))
 
-        if show_comments == True:
+        if show_comments:
             self.comment_root.sort(cmp=libbe.comment.cmp_time, reverse=True)
             comout = self.comment_root.string_thread(flatten=False)
             output = bugout + '\n' + comout.rstrip('\n')
-        else :
+        else:
             output = bugout
         return output
 
@@ -403,7 +403,7 @@ class Bug (settings_object.SavedSettingsObject):
             </comment>
           </bug>
         """
-        if self.time == None:
+        if self.time is None:
             timestring = ""
         else:
             timestring = utility.time_to_str(self.time)
@@ -417,13 +417,15 @@ class Bug (settings_object.SavedSettingsObject):
                 ('creator', self.creator),
                 ('created', timestring),
                 ('summary', self.summary)]
+
         lines = ['<bug>']
-        for (k,v) in info:
+        for (k, v) in info:
             if v is not None:
-                lines.append('  <%s>%s</%s>' % (k,xml.sax.saxutils.escape(v),k))
+                lines.append('  <%s>%s</%s>' %
+                             (k, xml.sax.saxutils.escape(v), k))
         for estr in self.extra_strings:
             lines.append('  <extra-string>%s</extra-string>' % estr)
-        if show_comments == True:
+        if show_comments:
             comout = self.comment_root.xml_thread(indent=indent+2)
             if comout:
                 comout = comout[indent:]  # strip leading indent spaces
@@ -463,17 +465,16 @@ class Bug (settings_object.SavedSettingsObject):
         >>> bugC.uuid == bugA.uuid
         True
         """
-        if type(xml_string) == types.UnicodeType:
+        if isinstance(xml_string, unicode):
             xml_string = xml_string.strip().encode('unicode_escape')
-        if hasattr(xml_string, 'getchildren'): # already an ElementTree Element
+        if hasattr(xml_string, 'getchildren'):  # already an ElementTree Element
             bug = xml_string
         else:
             bug = ElementTree.XML(xml_string)
         if bug.tag != 'bug':
-            raise utility.InvalidXML( \
-                'bug', bug, 'root element must be <bug>')
-        tags=['uuid','short-name','severity','status','assigned',
-              'reporter', 'creator','created','summary','extra-string']
+            raise utility.InvalidXML('bug', bug, 'root element must be <bug>')
+        tags = ['uuid', 'short-name', 'severity', 'status', 'assigned',
+                'reporter', 'creator', 'created', 'summary', 'extra-string']
         self.explicit_attrs = []
         uuid = None
         estrs = []
@@ -487,7 +488,7 @@ class Bug (settings_object.SavedSettingsObject):
                 comments.append(comm)
                 continue
             elif child.tag in tags:
-                if child.text == None or len(child.text) == 0:
+                if child.text is None or not child.text:
                     text = settings_object.EMPTY
                 else:
                     text = xml.sax.saxutils.unescape(child.text)
@@ -496,7 +497,7 @@ class Bug (settings_object.SavedSettingsObject):
                     text = text.strip()
                 if child.tag == 'uuid' and not preserve_uuids:
                     uuid = text
-                    continue # don't set the bug's uuid tag.
+                    continue  # don't set the bug's uuid tag.
                 elif child.tag == 'created':
                     if text is not settings_object.EMPTY:
                         self.time = utility.str_to_time(text)
@@ -504,21 +505,20 @@ class Bug (settings_object.SavedSettingsObject):
                     continue
                 elif child.tag == 'extra-string':
                     estrs.append(text)
-                    continue # don't set the bug's extra_string yet.
-                attr_name = child.tag.replace('-','_')
+                    continue  # don't set the bug's extra_string yet.
+                attr_name = child.tag.replace('-', '_')
                 self.explicit_attrs.append(attr_name)
                 setattr(self, attr_name, text)
             else:
-                libbe.LOG.warning(
-                    'ignoring unknown tag {0} in {1}'.format(
-                        child.tag, comment.tag))
+                libbe.LOG.warning('ignoring unknown tag %s in %s', child.tag,
+                                  comment.tag)
         if uuid != self.uuid:
-            if not hasattr(self, 'alt_id') or self.alt_id == None:
+            if not hasattr(self, 'alt_id') or self.alt_id is None:
                 self.alt_id = uuid
         self.extra_strings = estrs
         self.add_comments(comments, ignore_missing_references=True)
 
-    def add_comment(self, comment, *args, **kwargs):
+    def add_comment(self, comment, *_, **kwargs):
         """
         Add a comment too the current bug, under the parent specified
         by comment.in_reply_to.
@@ -582,10 +582,10 @@ class Bug (settings_object.SavedSettingsObject):
         default parent via default_parent.
         """
         uuid_map = {}
-        if default_parent == None:
+        if default_parent is None:
             default_parent = self.comment_root
         for c in list(self.comments()) + comments:
-            assert c.uuid != None
+            assert c.uuid is not None
             assert c.uuid not in uuid_map
             uuid_map[c.uuid] = c
             if c.alt_id != None:
@@ -595,7 +595,7 @@ class Bug (settings_object.SavedSettingsObject):
         if default_parent != self.comment_root:
             assert default_parent.uuid in uuid_map, default_parent.uuid
         for c in comments:
-            if c.in_reply_to == None \
+            if c.in_reply_to is None \
                     and default_parent.uuid != comment.INVALID_UUID:
                 c.in_reply_to = default_parent.uuid
             elif c.in_reply_to == comment.INVALID_UUID:
@@ -603,10 +603,9 @@ class Bug (settings_object.SavedSettingsObject):
             try:
                 parent = uuid_map[c.in_reply_to]
             except KeyError:
-                if ignore_missing_references == True:
-                    libbe.LOG.warning(
-                        'ignoring missing reference to {0}'.format(
-                            c.in_reply_to))
+                if ignore_missing_references:
+                    libbe.LOG.warning('ignoring missing reference to %s',
+                                      c.in_reply_to)
                     parent = default_parent
                     if parent.uuid != comment.INVALID_UUID:
                         c.in_reply_to = parent.uuid
@@ -708,7 +707,7 @@ class Bug (settings_object.SavedSettingsObject):
                               .format(attr, old, new, self.uuid)
                         raise ValueError(msg)
         for estr in other.extra_strings:
-            if not estr in self.extra_strings:
+            if estr not in self.extra_strings:
                 if accept_extra_strings:
                     self.extra_strings += [estr]
                 elif change_exception:
@@ -743,19 +742,19 @@ class Bug (settings_object.SavedSettingsObject):
     # methods for saving/loading/acessing settings and properties.
 
     def load_settings(self, settings_mapfile=None):
-        if settings_mapfile == None:
+        if settings_mapfile is None:
             settings_mapfile = self.storage.get(
                 self.id.storage('values'), '{}\n')
         try:
             settings = mapfile.parse(settings_mapfile)
-        except mapfile.InvalidMapfileContents, e:
+        except mapfile.InvalidMapfileContents:
             raise Exception('Invalid settings file for bug %s\n'
                             '(BE version missmatch?)' % self.id.user())
         self._setup_saved_settings(settings)
 
     def save_settings(self):
-        mf = mapfile.generate(self._get_saved_settings())
-        self.storage.set(self.id.storage('values'), mf)
+        json_map = mapfile.generate(self._get_saved_settings())
+        self.storage.set(self.id.storage('values'), json_map)
 
     def save(self):
         """
@@ -767,8 +766,8 @@ class Bug (settings_object.SavedSettingsObject):
         happen, so calling this method will just waste time (unless
         something else has been messing with your stored files).
         """
-        assert self.storage != None, "Can't save without storage"
-        if self.bugdir != None:
+        assert self.storage is not None, "Can't save without storage"
+        if self.bugdir is not None:
             parent = self.bugdir.id.storage()
         else:
             parent = None
@@ -776,11 +775,12 @@ class Bug (settings_object.SavedSettingsObject):
         self.storage.add(self.id.storage('values'), parent=self.id.storage(),
                          directory=False)
         self.save_settings()
-        if len(self.comment_root) > 0:
+        if self.comment_root:
             comment.save_comments(self)
 
     def load_comments(self, load_full=True):
-        if load_full == True:
+        # pylint: disable=missing-docstring
+        if load_full:
             # Force a complete load of the whole comment tree
             self.comment_root = self._get_comment_root(load_full=True)
         else:
@@ -788,35 +788,35 @@ class Bug (settings_object.SavedSettingsObject):
             # next _get_comment_root returns a fresh version.  Turn of
             # writing temporarily so we don't write our blank comment
             # tree to disk.
-            w = self.storage.writeable
+            writeable_copy = self.storage.writeable
             self.storage.writeable = False
             self.comment_root = None
-            self.storage.writeable = w
+            self.storage.writeable = writeable_copy
 
-    def remove(self):
+    def remove(self):  # pylint: disable=missing-docstring
         self.storage.recursive_remove(self.id.storage())
 
     # methods for managing comments
 
-    def uuids(self):
-        for comment in self.comments():
-            yield comment.uuid
+    def uuids(self):  # pylint: disable=missing-docstring
+        for com in self.comments():
+            yield com.uuid
 
-    def comments(self):
-        for comment in self.comment_root.traverse():
-            yield comment
+    def comments(self):  # pylint: disable=missing-docstring
+        for _comment in self.comment_root.traverse():
+            yield _comment
 
-    def new_comment(self, body=None):
-        comm = self.comment_root.new_reply(body=body)
-        return comm
+    def new_comment(self, body=None):  # pylint: disable=missing-docstring
+        return self.comment_root.new_reply(body=body)
 
     def comment_from_uuid(self, uuid, *args, **kwargs):
+        # pylint: disable=missing-docstring
         return self.comment_root.comment_from_uuid(uuid, *args, **kwargs)
 
     # methods for id generation
 
-    def sibling_uuids(self):
-        if self.bugdir != None:
+    def sibling_uuids(self): # pylint: disable=missing-docstring
+        if self.bugdir is not None:
             return self.bugdir.uuids()
         return []
 
@@ -844,9 +844,10 @@ def cmp_severity(bug_1, bug_2):
     >>> cmp_severity(bugA, bugB) < 0
     True
     """
-    if not hasattr(bug_2, "severity") :
+    if not hasattr(bug_2, "severity"):
         return 1
     return -cmp(severity_index[bug_1.severity], severity_index[bug_2.severity])
+
 
 def cmp_status(bug_1, bug_2):
     """
@@ -867,7 +868,6 @@ def cmp_status(bug_1, bug_2):
     """
     if not hasattr(bug_2, "status") :
         return 1
-    val_2 = status_index[bug_2.status]
     return cmp(status_index[bug_1.status], status_index[bug_2.status])
 
 def cmp_attr(bug_1, bug_2, attr, invert=False):
@@ -889,16 +889,16 @@ def cmp_attr(bug_1, bug_2, attr, invert=False):
     >>> cmp_attr(bugA, bugB, attr) == 0
     True
     """
-    if not hasattr(bug_2, attr) :
+    if not hasattr(bug_2, attr):
         return 1
     val_1 = getattr(bug_1, attr)
     val_2 = getattr(bug_2, attr)
-    if val_1 == None: val_1 = None
-    if val_2 == None: val_2 = None
+    if val_1 is None: val_1 = None
+    if val_2 is None: val_2 = None
 
-    if invert == True :
+    if invert:
         return -cmp(val_1, val_2)
-    else :
+    else:
         return cmp(val_1, val_2)
 
 # alphabetical rankings (a < z)
@@ -911,11 +911,13 @@ cmp_extra_strings = lambda bug_1, bug_2 : cmp_attr(bug_1, bug_2, "extra_strings"
 # chronological rankings (newer < older)
 cmp_time = lambda bug_1, bug_2 : cmp_attr(bug_1, bug_2, "time", invert=True)
 
+
 def cmp_mine(bug_1, bug_2):
     user_id = libbe.ui.util.user.get_user_id(bug_1.storage)
     mine_1 = bug_1.assigned != user_id
     mine_2 = bug_2.assigned != user_id
     return cmp(mine_1, mine_2)
+
 
 def cmp_comments(bug_1, bug_2):
     """
@@ -923,22 +925,24 @@ def cmp_comments(bug_1, bug_2):
     so you should call each bug's .load_comments() first if you want a
     full comparison.
     """
-    comms_1 = sorted(bug_1.comments(), key = lambda comm : comm.uuid)
-    comms_2 = sorted(bug_2.comments(), key = lambda comm : comm.uuid)
+    comms_1 = sorted(bug_1.comments(), key=lambda comm: comm.uuid)
+    comms_2 = sorted(bug_2.comments(), key=lambda comm: comm.uuid)
     result = cmp(len(comms_1), len(comms_2))
     if result != 0:
         return result
-    for c_1,c_2 in zip(comms_1, comms_2):
+    for c_1, c_2 in zip(comms_1, comms_2):
         result = cmp(c_1, c_2)
         if result != 0:
             return result
     return 0
 
+
 DEFAULT_CMP_FULL_CMP_LIST = \
     (cmp_status, cmp_severity, cmp_assigned, cmp_time, cmp_creator,
      cmp_reporter, cmp_comments, cmp_summary, cmp_uuid, cmp_extra_strings)
 
-class BugCompoundComparator (object):
+
+class BugCompoundComparator(object):
     def __init__(self, cmp_list=DEFAULT_CMP_FULL_CMP_LIST):
         self.cmp_list = cmp_list
     def __call__(self, bug_1, bug_2):
@@ -947,6 +951,7 @@ class BugCompoundComparator (object):
             if val != 0 :
                 return val
         return 0
+
 
 cmp_full = BugCompoundComparator()
 
@@ -958,15 +963,15 @@ def cmp_last_modified(bug_1, bug_2):
     creation for the timestamp.
     """
     def last_modified(bug):
-        time = bug.time
-        for comment in bug.comment_root.traverse():
-            if comment.time > time:
-                time = comment.time
-        return time
+        _time = bug.time
+        for _comment in bug.comment_root.traverse():
+            if _comment.time > _time:
+                _time = comment.time
+        return _time
     val_1 = last_modified(bug_1)
     val_2 = last_modified(bug_2)
     return -cmp(val_1, val_2)
 
 
-if libbe.TESTING == True:
-    suite = doctest.DocTestSuite()
+if libbe.TESTING:
+    doctest.DocTestSuite()
