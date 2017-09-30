@@ -374,34 +374,15 @@ class Diff (object):
             and removed_bugs are lists of added and removed bugs respectively.
             modified_bugs is a list of (old_bug,new_bug) pairs.
         """
-        added = []
-        removed = []
-        modified = []
 
         # take advantage of a RevisionedBugDir-style changed() method
-        new_ids, mod_ids, rem_ids = self.old_bugdir.changed()
-        for _id in new_ids:
-            for a_id in self.new_bugdir.storage.ancestors(_id):
-                if a_id.count('/') == 0:
-                    if a_id in [b.id.storage() for b in added]:
-                        break
-                    try:
-                        bug = self.new_bugdir.bug_from_uuid(a_id)
-                        added.append(bug)
-                    except libbe.bugdir.NoBugMatches:
-                        pass
+        add_ids, mod_ids, rem_ids = self.old_bugdir.changed()
+        added = Diff._filter_bugs(add_ids, self.new_bugdir.storage,
+                                  self.new_bugdir)
+        removed = Diff._filter_bugs(rem_ids, self.old_bugdir.storage,
+                                    self.old_bugdir)
 
-        for _id in rem_ids:
-            for a_id in self.old_bugdir.storage.ancestors(_id):
-                if a_id.count('/') == 0:
-                    if a_id in [b.id.storage() for b in removed]:
-                        break
-                    try:
-                        bug = self.old_bugdir.bug_from_uuid(a_id)
-                        removed.append(bug)
-                    except libbe.bugdir.NoBugMatches:
-                        pass
-
+        modified = []
         for _id in mod_ids:
             for a_id in self.new_bugdir.storage.ancestors(_id):
                 if a_id.count('/') == 0:
@@ -413,11 +394,26 @@ class Diff (object):
                         modified.append((old_bug, new_bug))
                     except libbe.bugdir.NoBugMatches:
                         pass
-
-        added.sort()
-        removed.sort()
         modified.sort(Diff._bug_modified_cmp)
+
         return (added, modified, removed)
+
+    @staticmethod
+    def _filter_bugs(id_list, storage, bugdir):
+        result = []
+        for _id in id_list:
+            for a_id in storage.ancestors(_id):
+                if a_id.count('/') == 0:
+                    if a_id in [b.id.storage() for b in result]:
+                        break
+                    try:
+                        bug = bugdir.bug_from_uuid(a_id)
+                        result.append(bug)
+                    except libbe.bugdir.NoBugMatches:
+                        pass
+        result.sort()
+        return result
+
 
     def _changed_bugs(self, subscriptions):
         """ Search for differences in all bugs between .old_bugdir and
