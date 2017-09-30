@@ -237,7 +237,7 @@ class Depend (libbe.command.Command):
                         continue
                     print >> self.stdout, (
                         '%s%s'
-                        % (' '*(depth), self.bug_string(node.bug, params)))
+                        % (' '*(depth), Depend.bug_string(node.bug, params)))
             if dtree.blocks_tree():
                 print >> self.stdout, '%s blocks:' % bug_a.id.user()
                 for depth, node in dtree.blocks_tree().thread():
@@ -245,7 +245,7 @@ class Depend (libbe.command.Command):
                         continue
                     print >> self.stdout, (
                         '%s%s'
-                        % (' '*(depth), self.bug_string(node.bug, params)))
+                        % (' '*(depth), Depend.bug_string(node.bug, params)))
             return 0
 
         if params['blocking-bug-id'] is not None:
@@ -262,21 +262,22 @@ class Depend (libbe.command.Command):
         if blocked_by:
             print >> self.stdout, '%s blocked by:' % bug_a.id.user()
             print >> self.stdout, \
-                '\n'.join([self.bug_string(_bug, params)
+                '\n'.join([Depend.bug_string(_bug, params)
                            for _bug in blocked_by])
         blocks = get_blocks(bugdirs, bug_a)
         if blocks:
             print >> self.stdout, '%s blocks:' % bug_a.id.user()
             print >> self.stdout, \
-                '\n'.join([self.bug_string(_bug, params)
+                '\n'.join([Depend.bug_string(_bug, params)
                            for _bug in blocks])
         return 0
 
-    def bug_string(self, _bug, params):
+    @staticmethod
+    def bug_string(_bug, params):
         fields = [_bug.id.user()]
-        if params['show-status'] == True:
+        if params['show-status']:
             fields.append(_bug.status)
-        if params['show-summary'] == True:
+        if params['show-summary']:
             fields.append(_bug.summary)
         return '\t'.join(fields)
 
