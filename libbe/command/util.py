@@ -22,13 +22,19 @@ import os.path
 import libbe
 import libbe.command
 
-class Completer (object):
+# pylint: disable=missing-docstring
+
+
+class Completer(object):
+    # pylint: disable=too-few-public-methods
     def __init__(self, options):
         self.options = options
+
     def __call__(self, bugdirs, fragment=None):
         return [fragment]
 
-def complete_command(command, argument, fragment=None):
+
+def complete_command(_, __, fragment=None):
     """
     List possible command completions for fragment.
 
@@ -36,57 +42,67 @@ def complete_command(command, argument, fragment=None):
     """
     return list(libbe.command.commands(command_names=True))
 
+
 def comp_path(fragment=None):
     """List possible path completions for fragment."""
-    if fragment == None:
+    if fragment is None:
         fragment = '.'
     comps = glob.glob(fragment+'*') + glob.glob(fragment+'/*')
     if len(comps) == 1 and os.path.isdir(comps[0]):
         comps.extend(glob.glob(comps[0]+'/*'))
     return comps
 
-def complete_path(command, argument, fragment=None):
+
+def complete_path(_, __, fragment=None):
     """List possible path completions for fragment."""
     return comp_path(fragment)
 
-def complete_status(command, argument, fragment=None):
+
+def complete_status(command, _, fragment=None):
+    # pylint: disable=protected-access
     bd = sorted(command._get_bugdirs().items())[0]
     import libbe.bug
     return libbe.bug.status_values
 
-def complete_severity(command, argument, fragment=None):
+
+def complete_severity(command, _, fragment=None):
+    # pylint: disable=protected-access
     bd = sorted(command._get_bugdirs().items())[0]
     import libbe.bug
     return libbe.bug.severity_values
+
 
 def assignees(bugdirs):
     ret = set()
     for bugdir in bugdirs.values():
         bugdir.load_all_bugs()
         ret.update(set([bug.assigned for bug in bugdir
-                        if bug.assigned != None]))
+                        if bug.assigned is None]))
     return list(ret)
 
-def complete_assigned(command, argument, fragment=None):
+
+def complete_assigned(command, _, fragment=None):
+    # pylint: disable=protected-access
     return assignees(command._get_bugdirs())
 
-def complete_extra_strings(command, argument, fragment=None):
-    if fragment == None:
+
+def complete_extra_strings(_, __, fragment=None):
+    if fragment is None:
         return []
     return [fragment]
 
-def complete_bugdir_id(command, argument, fragment=None):
-    bugdirs = command._get_bugdirs()
-    return bugdirs.keys()
 
-def complete_bug_id(command, argument, fragment=None):
-    return complete_bug_comment_id(command, argument, fragment,
-                                   comments=False)
+def complete_bugdir_id(command, _, fragment=None):
+    # pylint: disable=protected-access
+    return command._get_bugdirs().keys()
+
+
+def complete_bug_id(command, argument, fragment='/'):
+    return complete_bug_comment_id(command, argument, fragment, comments=False)
+
 
 def complete_bug_comment_id(command, _, fragment=None, comments=True):
-    # pylint: disable=missing-docstring
     import libbe.bugdir
-    import libbe.util.id
     bugdirs = command._get_bugdirs()  # pylint: disable=protected-access
     p, matches, root = _data(bugdirs, fragment)
 
@@ -128,7 +144,7 @@ def complete_bug_comment_id(command, _, fragment=None, comments=True):
     return _gather_matches(matches, common, root, child_fn)
 
 
-def _data(bugdirs, fragment=None):  # pylint: disable=missing-docstring
+def _data(bugdirs, fragment=None):
     try:
         p = libbe.util.id.parse_user(bugdirs, fragment)
         matches = None
@@ -149,7 +165,6 @@ def _data(bugdirs, fragment=None):  # pylint: disable=missing-docstring
 
 
 def _gather_matches(matches, common, root, child_fn=None):
-    # pylint: disable=missing-docstring
     common += '/'
     possible = []
     for match in matches:
@@ -193,15 +208,15 @@ def select_values(string, possible_values, name="unkown"):
     UserError: Invalid foobar xyz
       ['abc', 'def', 'hij']
     """
-    possible_values = list(possible_values) # don't alter the original
-    if string == None:
+    possible_values = list(possible_values)  # don't alter the original
+    if string is None:
         pass
     elif string.startswith('-'):
         blacklisted_values = set(string[1:].split(','))
         for value in blacklisted_values:
             if value not in possible_values:
-                raise libbe.command.UserError('Invalid %s %s\n  %s'
-                                % (name, value, possible_values))
+                raise libbe.command.UserError('Invalid %s %s\n  %s' %
+                                              (name, value, possible_values))
             possible_values.remove(value)
     else:
         whitelisted_values = string.split(',')
@@ -213,21 +228,22 @@ def select_values(string, possible_values, name="unkown"):
         possible_values = whitelisted_values
     return possible_values
 
-def bugdir_bug_comment_from_user_id(bugdirs, id):
-    p = libbe.util.id.parse_user(bugdirs, id)
+
+def bugdir_bug_comment_from_user_id(bugdirs, _id):
+    p = libbe.util.id.parse_user(bugdirs, _id)
     if not p['type'] in ['bugdir', 'bug', 'comment']:
         raise libbe.command.UserError(
             '{} is a {} id, not a bugdir, bug, or comment id'.format(
-                id, p['type']))
+                _id, p['type']))
     if p['bugdir'] not in bugdirs:
         raise libbe.command.UserError(
             "{} doesn't belong to any bugdirs in {}".format(
-                id, sorted(bugdirs.keys())))
+                _id, sorted(bugdirs.keys())))
     bugdir = bugdirs[p['bugdir']]
     if p['bugdir'] != bugdir.uuid:
         raise libbe.command.UserError(
             "%s doesn't belong to this bugdir (%s)"
-            % (id, bugdir.uuid))
+            % (_id, bugdir.uuid))
     if 'bug' in p:
         bug = bugdir.bug_from_uuid(p['bug'])
         if 'comment' in p:
@@ -238,13 +254,19 @@ def bugdir_bug_comment_from_user_id(bugdirs, id):
         bug = comment = None
     return (bugdir, bug, comment)
 
+
 def bug_from_uuid(bugdirs, uuid):
     error = None
     for bugdir in bugdirs.values():
         try:
             bug = bugdir.bug_from_uuid(uuid)
-        except libbe.bugdir.NoBugMatches as e:
-            error = e
+        except libbe.bugdir.NoBugMatches as exc:
+            error = exc
         else:
             return bug
-    raise error
+    if error is not None:
+        # We already checked for `None`
+        # pylint: disable=raising-bad-type
+        raise error
+
+    raise libbe.bugdir.NoBugMatches(uuid)
