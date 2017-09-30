@@ -18,7 +18,6 @@
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-import os
 
 import libbe
 import libbe.bug
@@ -121,72 +120,74 @@ class Subscribe (libbe.command.Command):
     def _run(self, **params):
         storage = self._get_storage()
         bugdirs = self._get_bugdirs()
-        if params['list-all'] == True or params['list'] == True:
+        if params['list-all'] or params['list']:
             writeable = storage.writeable
             storage.writeable = False
-            if params['list-all'] == True:
-                assert len(params['id']) == 0, params['id']
+            if params['list-all']:
+                assert not params['id'], params['id']
         subscriber = params['subscriber']
-        if subscriber == None:
+        if subscriber is None:
             subscriber = self._get_user_id()
-        if params['unsubscribe'] == True:
-            if params['servers'] == None:
+        if params['unsubscribe']:
+            if params['servers'] is None:
                 params['servers'] = 'INVALID'
-            if params['types'] == None:
+            if params['types'] is None:
                 params['types'] = 'INVALID'
         else:
-            if params['servers'] == None:
+            if params['servers'] is None:
                 params['servers'] = '*'
-            if params['types'] == None:
+            if params['types'] is None:
                 params['types'] = 'all'
         servers = params['servers'].split(',')
         types = params['types'].split(',')
 
-        if len(params['id']) == 0:
+        if not params['id']:
             params['id'] = bugdirs.keys()
         for _id in params['id']:
             p = libbe.util.id.parse_user(bugdirs, _id)
             if p['type'] == 'bugdir':
                 type_root = libbe.diff.BUGDIR_TYPE_ALL
                 entity = bugdirs[p['bugdir']]
-            else: # bug-specific subscriptions
+            else:  # bug-specific subscriptions
                 type_root = libbe.diff.BUG_TYPE_ALL
-                bugdir,bug,comment = (
-                    libbe.command.util.bugdir_bug_comment_from_user_id(
-                        bugdirs, _id))
-                entity = bug
+                _, entity, __ = (
+                    libbe.command.util.bugdir_bug_comment_from_user_id(bugdirs,
+                                                                       _id))
             entity_name = entity.id.user()
-            if params['list-all'] == True:
+            if params['list-all']:
                 entity_name = 'anything in the bug directory'
-            types = [libbe.diff.type_from_name(name, type_root, default=libbe.diff.INVALID_TYPE,
-                                         default_ok=params['unsubscribe'])
+            types = [libbe.diff.type_from_name(name, type_root,
+                                               default=libbe.diff.INVALID_TYPE,
+                                               default_ok=params['unsubscribe'])
                      for name in types]
             estrs = entity.extra_strings
-            if params['list'] == True or params['list-all'] == True:
+            if params['list'] or params['list-all']:
                 pass
-            else: # alter subscriptions
-                if params['unsubscribe'] == True:
-                    estrs = unsubscribe(estrs, subscriber, types, servers, type_root)
-                else: # add the tag
-                    estrs = subscribe(estrs, subscriber, types, servers, type_root)
+            else:  # alter subscriptions
+                if params['unsubscribe']:
+                    estrs = unsubscribe(estrs, subscriber, types, servers,
+                                        type_root)
+                else:  # add the tag
+                    estrs = subscribe(estrs, subscriber, types, servers,
+                                      type_root)
                 entity.extra_strings = estrs # reassign to notice change
 
-            if params['list-all'] == True:
+            if params['list-all']:
                 subscriptions = []
                 for bugdir in bugdirs.values():
                     bugdir.load_all_bugs()
-                    subscriptions.extend(
-                        get_bugdir_subscribers(bugdir, servers[0]))
+                    subscriptions.extend(get_bugdir_subscribers(bugdir,
+                                                                servers[0]))
             else:
                 subscriptions = []
                 for estr in entity.extra_strings:
                     if estr.startswith(TAG):
                         subscriptions.append(estr[len(TAG):])
 
-            if len(subscriptions) > 0:
+            if subscriptions:
                 print >> self.stdout, 'Subscriptions for %s:' % entity_name
                 print >> self.stdout, '\n'.join(subscriptions)
-        if params['list-all'] == True or params['list'] == True:
+        if params['list-all'] or params['list']:
             storage.writeable = writeable
         return 0
 
