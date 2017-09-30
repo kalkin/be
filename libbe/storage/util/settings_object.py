@@ -113,83 +113,94 @@ def versioned_property(name, doc,
                        settings_properties=[],
                        required_saved_properties=[],
                        require_save=False):
-    """Combine the common decorators in a single function.
+    """ Combine the common decorators in a single function.
 
-    Use zero or one (but not both) of default or generator, since a
-    working default will keep the generator from functioning.  Use the
-    default if you know what you want the default value to be at
-    'coding time'.  Use the generator if you can write a function to
-    determine a valid default at run time.  If both default and
-    generator are None, then the property will be a defaulting
-    property which defaults to None.
+        Use zero or one (but not both) of default or generator, since a working
+        default will keep the generator from functioning.  Use the default if
+        you know what you want the default value to be at 'coding time'.  Use
+        the generator if you can write a function to determine a valid default
+        at run time.  If both default and generator are None, then the property
+        will be a defaulting property which defaults to None.
 
-    allowed and check_fn have a similar relationship, although you can
-    use both of these if you want.  allowed compares the proposed
-    value against a list determined at 'coding time' and check_fn
-    allows more flexible comparisons to take place at run time.
+        allowed and check_fn have a similar relationship, although you can use
+        both of these if you want.  allowed compares the proposed value against
+        a list determined at 'coding time' and check_fn allows more flexible
+        comparisons to take place at run time.
 
-    Set require_save to True if you want to save the default/generated
-    value for a property, to protect against future changes.  E.g., we
-    currently expect all comments to be 'text/plain' but in the future
-    we may want to default to 'text/html'.  If we don't want the old
-    comments to be interpreted as 'text/html', we would require that
-    the content type be saved.
+        Set require_save to True if you want to save the default/generated value
+        for a property, to protect against future changes.  E.g., we currently
+        expect all comments to be 'text/plain' but in the future we may want to
+        default to 'text/html'.  If we don't want the old comments to be
+        interpreted as 'text/html', we would require that the content type be
+        saved.
 
-    change_hook, primer, settings_properties, and
-    required_saved_properties are only options to get their defaults
-    into our local scope.  Don't mess with them.
+        change_hook, primer, settings_properties, and required_saved_properties
+        are only options to get their defaults into our local scope.  Don't mess
+        with them.
 
-    Set mutable=True if:
+        Set mutable=True if:
 
-    * default is a mutable
-    * your generator function may return mutables
-    * you set change_hook and might have mutable property values
+        * default is a mutable
+        * your generator function may return mutables
+        * you set change_hook and might have mutable property values
 
-    See the docstrings in `libbe.properties` for details on how each of
-    these cases are handled.
+        See the docstrings in `libbe.properties` for details on how each of
+        these cases are handled.
 
-    The value stored in `.settings[name]` will be
+        The value stored in `.settings[name]` will be
 
-    * no value (or UNPRIMED) if the property has been neither set,
-      nor loaded as blank.
-    * EMPTY if the value has been loaded as blank.
-    * some value if the property has been either loaded or set.
+        * no value (or UNPRIMED) if the property has been neither set, nor
+          loaded as blank.
+        * EMPTY if the value has been loaded as blank.
+        * some value if the property has been either loaded or set.
     """
     settings_properties.append(name)
-    if require_save == True:
+
+    if require_save:
         required_saved_properties.append(name)
+
     def decorator(funcs):
+        """ Versioned property decorator """
         fulldoc = doc
-        if default != None or generator == None:
-            defaulting  = defaulting_property(default=default, null=EMPTY,
+        if default is not None or generator is None:
+            defaulting = defaulting_property(default=default, null=EMPTY,
                                               mutable_default=mutable)
             fulldoc += "\n\nThis property defaults to %s." % default
-        if generator != None:
+
+        if generator is not None:
             cached = cached_property(generator=generator, initVal=EMPTY,
                                      mutable=mutable)
             fulldoc += "\n\nThis property is generated with %s." % generator
-        if check_fn != None:
+
+        if check_fn is not None:
             fn_checked = fn_checked_property(value_allowed_fn=check_fn)
             fulldoc += "\n\nThis property is checked with %s." % check_fn
-        if allowed != None:
+
+        if allowed is not None:
             checked = checked_property(allowed=allowed)
             fulldoc += "\n\nThe allowed values for this property are: %s." \
                        % (', '.join(allowed))
-        hooked      = change_hook_property(hook=change_hook, mutable=mutable,
-                                           default=EMPTY)
-        primed      = primed_property(primer=primer, initVal=UNPRIMED,
-                                      unprimeableVal=EMPTY)
-        settings    = settings_property(name=name, null=UNPRIMED)
-        docp        = doc_property(doc=fulldoc)
+
+        hooked = change_hook_property(hook=change_hook, mutable=mutable,
+                                      default=EMPTY)
+        primed = primed_property(primer=primer, initVal=UNPRIMED,
+                                 unprimeableVal=EMPTY)
+        settings = settings_property(name=name, null=UNPRIMED)
+        docp = doc_property(doc=fulldoc)
         deco = hooked(primed(settings(docp(funcs))))
-        if default != None or generator == None:
+
+        if default is not None or generator is None:
             deco = defaulting(deco)
-        if generator != None:
+
+        if generator is not None:
             deco = cached(deco)
-        if check_fn != None:
+
+        if check_fn is not None:
             deco = fn_checked(deco)
-        if allowed != None:
+
+        if allowed is not None:
             deco = checked(deco)
+
         return Property(deco)
     return decorator
 
