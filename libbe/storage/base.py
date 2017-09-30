@@ -25,14 +25,14 @@ import os
 import pickle
 import types
 
-from libbe.error import NotSupported
 import libbe.storage
-from libbe.util.tree import Tree
-from libbe.util import InvalidObject
 import libbe.version
 from libbe import TESTING
+from libbe.error import NotSupported
+from libbe.util import InvalidObject
+from libbe.util.tree import Tree
 
-if TESTING == True:
+if TESTING:
     import doctest
     import os.path
     import sys
@@ -40,12 +40,15 @@ if TESTING == True:
 
     from libbe.util.utility import Dir
 
-class ConnectionError (Exception):
+
+class ConnectionError(Exception):
     pass
+
 
 class InvalidStorageVersion(ConnectionError):
     def __init__(self, active_version, expected_version=None):
-        if expected_version == None:
+        super(InvalidStorageVersion, self).__init__()
+        if expected_version is None:
             expected_version = libbe.storage.STORAGE_VERSION
         msg = 'Storage in "%s" not the expected "%s"' \
             % (active_version, expected_version)
@@ -53,55 +56,65 @@ class InvalidStorageVersion(ConnectionError):
         self.active_version = active_version
         self.expected_version = expected_version
 
-class InvalidID (KeyError):
+
+class InvalidID(KeyError):
     def __init__(self, id=None, revision=None, msg=None):
-        KeyError.__init__(self, id)
+        super(InvalidID, self).__init__(id)
         self.msg = msg
         self.id = id
         self.revision = revision
+
     def __str__(self):
-        if self.msg == None:
+        if self.msg is None:
             return '%s in revision %s' % (self.id, self.revision)
         return self.msg
 
 
-class InvalidRevision (KeyError):
+class InvalidRevision(KeyError):
     pass
 
-class InvalidDirectory (Exception):
+
+class InvalidDirectory(Exception):
     pass
 
-class DirectoryNotEmpty (InvalidDirectory):
+
+class DirectoryNotEmpty(InvalidDirectory):
     pass
 
-class NotWriteable (NotSupported):
+
+class NotWriteable(NotSupported):
     def __init__(self, msg):
-        NotSupported.__init__(self, 'write', msg)
+        super(NotWriteable, self).__init__('write', msg)
 
-class NotReadable (NotSupported):
+
+class NotReadable(NotSupported):
     def __init__(self, msg):
-        NotSupported.__init__(self, 'read', msg)
+        super(NotReadable, self).__init__('read', msg)
+
 
 class EmptyCommit(Exception):
     def __init__(self):
-        Exception.__init__(self, 'No changes to commit')
+        super(EmptyCommit, self).__init__('No changes to commit')
 
-class _EMPTY (object):
+
+class _EMPTY(object):
     """Entry has been added but has no user-set value."""
     pass
 
-class Entry (Tree):
+
+class Entry(Tree):
     def __init__(self, id, value=_EMPTY, parent=None, directory=False,
                  children=None):
-        if children == None:
-            Tree.__init__(self)
+        if children is None:
+            super(Entry, self).__init__()
         else:
-            Tree.__init__(self, children)
+            super(Entry, self).__init__(children)
+
         self.id = id
         self.value = value
         self.parent = parent
-        if self.parent != None:
-            if self.parent.directory == False:
+        if self.parent is not None:
+            if not self.parent.directory:
                 raise InvalidDirectory(
                     'Non-directory %s cannot have children' % self.parent)
             parent.append(self)
@@ -114,38 +127,42 @@ class Entry (Tree):
         return str(self)
 
     def __cmp__(self, other, local=False):
-        if other == None:
+        if other is None:
             return cmp(1, None)
-        if cmp(self.id, other.id) != 0:
+
+        if cmp(self.id, other.id):
             return cmp(self.id, other.id)
-        if cmp(self.value, other.value) != 0:
+
+        if cmp(self.value, other.value):
             return cmp(self.value, other.value)
-        if local == False:
-            if self.parent == None:
-                if cmp(self.parent, other.parent) != 0:
+
+        if not local:
+            if self.parent is None:
+                if cmp(self.parent, other.parent):
                     return cmp(self.parent, other.parent)
-            elif self.parent.__cmp__(other.parent, local=True) != 0:
+            elif self.parent.__cmp__(other.parent, local=True):
                 return self.parent.__cmp__(other.parent, local=True)
-            for sc,oc in zip(self, other):
+            for sc, oc in zip(self, other):
                 if sc.__cmp__(oc, local=True) != 0:
                     return sc.__cmp__(oc, local=True)
         return 0
 
     def _objects_to_ids(self):
-        if self.parent != None:
+        if self.parent is not None:
             self.parent = self.parent.id
-        for i,c in enumerate(self):
+        for i, c in enumerate(self):
             self[i] = c.id
         return self
 
     def _ids_to_objects(self, dict):
-        if self.parent != None:
+        if self.parent is not None:
             self.parent = dict[self.parent]
-        for i,c in enumerate(self):
+        for i, c in enumerate(self):
             self[i] = dict[c]
         return self
 
-class Storage (object):
+
+class Storage(object):
     """
     This class declares all the methods required by a Storage
     interface.  This implementation just keeps the data in a
@@ -158,9 +175,9 @@ class Storage (object):
         self.encoding = encoding
         self.options = options
         self.readable = True  # soft limit (user choice)
-        self._readable = True # hard limit (backend choice)
+        self._readable = True  # hard limit (backend choice)
         self.writeable = True  # soft limit (user choice)
-        self._writeable = True # hard limit (backend choice)
+        self._writeable = True  # hard limit (backend choice)
         self.versioned = False
         self.can_init = True
         self.connected = False
@@ -187,23 +204,23 @@ class Storage (object):
 
     def init(self):
         """Create a new storage repository."""
-        if self.can_init == False:
+        if not self.can_init:
             raise NotSupported('init',
                                'Cannot initialize this repository format.')
-        if self.is_writeable() == False:
+        if not self.is_writeable():
             raise NotWriteable('Cannot initialize unwriteable storage.')
         return self._init()
 
     def _init(self):
         f = open(os.path.join(self.repo, 'repo.pkl'), 'wb')
         root = Entry(id='__ROOT__', directory=True)
-        d = {root.id:root}
-        pickle.dump(dict((k,v._objects_to_ids()) for k,v in d.items()), f, -1)
+        d = {root.id: root}
+        pickle.dump(dict((k, v._objects_to_ids()) for k, v in d.items()), f, -1)
         f.close()
 
     def destroy(self):
         """Remove the storage repository."""
-        if self.is_writeable() == False:
+        if not self.is_writeable():
             raise NotWriteable('Cannot destroy unwriteable storage.')
         return self._destroy()
 
@@ -212,7 +229,7 @@ class Storage (object):
 
     def connect(self):
         """Open a connection to the repository."""
-        if self.is_readable() == False:
+        if not self.is_readable():
             raise NotReadable('Cannot connect to unreadable storage.')
         self._connect()
         self.connected = True
@@ -223,42 +240,43 @@ class Storage (object):
         except IOError:
             raise ConnectionError(self)
         d = pickle.load(f)
-        self._data = dict((k,v._ids_to_objects(d)) for k,v in d.items())
+        self._data = dict((k, v._ids_to_objects(d)) for k, v in d.items())
         f.close()
 
     def disconnect(self):
         """Close the connection to the repository."""
-        if self.is_writeable() == False:
+        if not self.is_writeable():
             return
-        if self.connected == False:
+        if not self.connected:
             return
         self._disconnect()
         self.connected = False
 
     def _disconnect(self):
         f = open(os.path.join(self.repo, 'repo.pkl'), 'wb')
-        pickle.dump(dict((k,v._objects_to_ids())
-                         for k,v in self._data.items()), f, -1)
+        pickle.dump(dict((k, v._objects_to_ids())
+                         for k, v in self._data.items()), f, -1)
         f.close()
         self._data = None
 
     def add(self, id, *args, **kwargs):
         """Add an entry"""
-        if self.is_writeable() == False:
+        if not self.is_writeable():
             raise NotWriteable('Cannot add entry to unwriteable storage.')
         if not self.exists(id):
             self._add(id, *args, **kwargs)
 
     def _add(self, id, parent=None, directory=False):
-        if parent == None:
+        if parent is None:
             parent = '__ROOT__'
-        p = self._data[parent]
-        self._data[id] = Entry(id, parent=p, directory=directory)
+        self._data[id] = Entry(id, parent=self._data[parent],
+                               directory=directory)
 
     def exists(self, *args, **kwargs):
         """Check an entry's existence"""
-        if self.is_readable() == False:
-            raise NotReadable('Cannot check entry existence in unreadable storage.')
+        if not self.is_readable():
+            msg = 'Cannot check entry existence in unreadable storage.'
+            raise NotReadable(msg)
         return self._exists(*args, **kwargs)
 
     def _exists(self, id, revision=None):
@@ -266,21 +284,20 @@ class Storage (object):
 
     def remove(self, *args, **kwargs):
         """Remove an entry."""
-        if self.is_writeable() == False:
+        if not self.is_writeable():
             raise NotSupported('write',
                                'Cannot remove entry from unwriteable storage.')
         self._remove(*args, **kwargs)
 
     def _remove(self, id):
-        if self._data[id].directory == True \
-                and len(self.children(id)) > 0:
+        if self._data[id].directory and self.children(id):
             raise DirectoryNotEmpty(id)
         e = self._data.pop(id)
         e.parent.remove(e)
 
     def recursive_remove(self, *args, **kwargs):
         """Remove an entry and all its decendents."""
-        if self.is_writeable() == False:
+        if not self.is_writeable():
             raise NotSupported('write',
                                'Cannot remove entries from unwriteable storage.')
         self._recursive_remove(*args, **kwargs)
@@ -291,19 +308,19 @@ class Storage (object):
 
     def ancestors(self, *args, **kwargs):
         """Return a list of the specified entry's ancestors' ids."""
-        if self.is_readable() == False:
+        if not self.is_readable():
             raise NotReadable('Cannot list parents with unreadable storage.')
         return self._ancestors(*args, **kwargs)
 
     def _ancestors(self, id=None, revision=None):
-        if id == None:
+        if id is None:
             return []
         ancestors = []
         stack = [id]
-        while len(stack) > 0:
-            id = stack.pop(0)
-            parent = self._data[id].parent
-            if parent != None and not parent.id.startswith('__'):
+        while stack:
+            _id = stack.pop(0)
+            parent = self._data[_id].parent
+            if parent is not None and not parent.id.startswith('__'):
                 ancestor = parent.id
                 ancestors.append(ancestor)
                 stack.append(ancestor)
@@ -311,12 +328,12 @@ class Storage (object):
 
     def children(self, *args, **kwargs):
         """Return a list of specified entry's children's ids."""
-        if self.is_readable() == False:
+        if not self.is_readable():
             raise NotReadable('Cannot list children with unreadable storage.')
         return self._children(*args, **kwargs)
 
     def _children(self, id=None, revision=None):
-        if id == None:
+        if id is None:
             id = '__ROOT__'
         return [c.id for c in self._data[id] if not c.id.startswith('__')]
 
@@ -328,7 +345,7 @@ class Storage (object):
         If there is no id, return default, unless default is not
         given, in which case raise InvalidID.
         """
-        if self.is_readable() == False:
+        if not self.is_readable():
             raise NotReadable('Cannot get entry with unreadable storage.')
         if 'decode' in kwargs:
             decode = kwargs.pop('decode')
@@ -353,7 +370,7 @@ class Storage (object):
         """
         Set the entry contents.
         """
-        if self.is_writeable() == False:
+        if not self.is_writeable():
             raise NotWriteable('Cannot set entry in unwriteable storage.')
         if type(value) == types.UnicodeType:
             value = value.encode(self.encoding)
@@ -362,10 +379,11 @@ class Storage (object):
     def _set(self, id, value):
         if id not in self._data:
             raise InvalidID(id)
-        if self._data[id].directory == True:
+        if self._data[id].directory:
             raise InvalidDirectory(
                 'Directory %s cannot have data' % self.parent)
         self._data[id].value = value
+
 
 class VersionedStorage (Storage):
     """
@@ -385,9 +403,9 @@ class VersionedStorage (Storage):
         root = Entry(id='__ROOT__', directory=True)
         summary = Entry(id='__COMMIT__SUMMARY__', value='Initial commit')
         body = Entry(id='__COMMIT__BODY__')
-        initial_commit = {root.id:root, summary.id:summary, body.id:body}
-        d = dict((k,v._objects_to_ids()) for k,v in initial_commit.items())
-        pickle.dump([d, copy.deepcopy(d)], f, -1) # [inital tree, working tree]
+        initial_commit = {root.id: root, summary.id :summary, body.id: body}
+        d = dict((k, v._objects_to_ids()) for k, v in initial_commit.items())
+        pickle.dump([d, copy.deepcopy(d)], f, -1)  # [inital tree, working tree]
         f.close()
 
     def _connect(self):
@@ -396,33 +414,32 @@ class VersionedStorage (Storage):
         except IOError:
             raise ConnectionError(self)
         d = pickle.load(f)
-        self._data = [dict((k,v._ids_to_objects(t)) for k,v in t.items())
+        self._data = [dict((k, v._ids_to_objects(t)) for k, v in t.items())
                       for t in d]
         f.close()
 
     def _disconnect(self):
         f = open(os.path.join(self.repo, 'repo.pkl'), 'wb')
-        pickle.dump([dict((k,v._objects_to_ids())
-                          for k,v in t.items()) for t in self._data], f, -1)
+        pickle.dump([dict((k, v._objects_to_ids())
+                          for k, v in t.items()) for t in self._data], f, -1)
         f.close()
         self._data = None
 
     def _add(self, id, parent=None, directory=False):
-        if parent == None:
+        if parent is None:
             parent = '__ROOT__'
-        p = self._data[-1][parent]
-        self._data[-1][id] = Entry(id, parent=p, directory=directory)
+        self._data[-1][id] = Entry(id, parent=self._data[-1][parent],
+                                   directory=directory)
 
     def _exists(self, id, revision=None):
-        if revision == None:
+        if revision is None:
             revision = -1
         else:
             revision = int(revision)
         return id in self._data[revision]
 
     def _remove(self, id):
-        if self._data[-1][id].directory == True \
-                and len(self.children(id)) > 0:
+        if self._data[-1][id].directory and self.children(id):
             raise DirectoryNotEmpty(id)
         e = self._data[-1].pop(id)
         e.parent.remove(e)
@@ -432,27 +449,27 @@ class VersionedStorage (Storage):
             self._remove(entry.id)
 
     def _ancestors(self, id=None, revision=None):
-        if id == None:
+        if id is None:
             return []
-        if revision == None:
+        if revision is None:
             revision = -1
         else:
             revision = int(revision)
         ancestors = []
         stack = [id]
-        while len(stack) > 0:
+        while stack:
             id = stack.pop(0)
             parent = self._data[revision][id].parent
-            if parent != None and not parent.id.startswith('__'):
+            if parent is not None and not parent.id.startswith('__'):
                 ancestor = parent.id
                 ancestors.append(ancestor)
                 stack.append(ancestor)
         return ancestors
 
     def _children(self, id=None, revision=None):
-        if id == None:
+        if id is None:
             id = '__ROOT__'
-        if revision == None:
+        if revision is None:
             revision = -1
         else:
             revision = int(revision)
@@ -460,7 +477,7 @@ class VersionedStorage (Storage):
                 if not c.id.startswith('__')]
 
     def _get(self, id, default=InvalidObject, revision=None):
-        if revision == None:
+        if revision is None:
             revision = -1
         else:
             revision = int(revision)
@@ -481,15 +498,15 @@ class VersionedStorage (Storage):
         Commit the current repository, with a commit message string
         summary and body.  Return the name of the new revision.
 
-        If allow_empty == False (the default), raise EmptyCommit if
+        If not allow_empty (the default), raise EmptyCommit if
         there are no changes to commit.
         """
-        if self.is_writeable() == False:
+        if not self.is_writeable():
             raise NotWriteable('Cannot commit to unwriteable storage.')
         return self._commit(*args, **kwargs)
 
     def _commit(self, summary, body=None, allow_empty=False):
-        if self._data[-1] == self._data[-2] and allow_empty == False:
+        if self._data[-1] == self._data[-2] and not allow_empty:
             raise EmptyCommit
         self._data[-1]["__COMMIT__SUMMARY__"].value = summary
         self._data[-1]["__COMMIT__BODY__"].value = body
@@ -508,17 +525,17 @@ class VersionedStorage (Storage):
 
         If the specified revision does not exist, raise InvalidRevision.
         """
-        if index == None:
+        if index is None:
             return None
         try:
             if int(index) != index:
                 raise InvalidRevision(index)
         except ValueError:
             raise InvalidRevision(index)
-        L = len(self._data) - 1  # -1 b/c of initial commit
-        if index >= -L and index <= L:
-            return str(index % L)
-        raise InvalidRevision(i)
+        length = len(self._data) - 1  # -1 b/c of initial commit
+        if index >= -length and index <= length:
+            return str(index % length)
+        raise InvalidRevision(index)
 
     def changed(self, revision):
         """Return a tuple of lists of ids `(new, modified, removed)` from the
@@ -527,21 +544,21 @@ class VersionedStorage (Storage):
         new = []
         modified = []
         removed = []
-        for id,value in self._data[int(revision)].items():
-            if id.startswith('__'):
+        for _id, value in self._data[int(revision)].items():
+            if _id.startswith('__'):
                 continue
-            if not id in self._data[-1]:
-                removed.append(id)
-            elif value.value != self._data[-1][id].value:
-                modified.append(id)
-        for id in self._data[-1]:
-            if not id in self._data[int(revision)]:
-                new.append(id)
+            if _id not in self._data[-1]:
+                removed.append(_id)
+            elif value.value != self._data[-1][_id].value:
+                modified.append(_id)
+        for _id in self._data[-1]:
+            if _id not in self._data[int(revision)]:
+                new.append(_id)
         return (new, modified, removed)
 
 
-if TESTING == True:
-    class StorageTestCase (unittest.TestCase):
+if TESTING:
+    class StorageTestCase(unittest.TestCase):
         """Test cases for Storage class."""
 
         Class = Storage
@@ -604,23 +621,25 @@ if TESTING == True:
             except ConnectionError:
                 pass
 
-    class Storage_init_TestCase (StorageTestCase):
+    class Storage_init_TestCase(StorageTestCase):
         """Test cases for Storage.init method."""
 
         def test_connect_should_succeed_after_init(self):
             """Should connect after initialization."""
             self.s.connect()
 
-    class Storage_connect_disconnect_TestCase (StorageTestCase):
-        """Test cases for Storage.connect and .disconnect methods."""
+    class Storage_connect_disconnect_TestCase(StorageTestCase):
+        """ Test cases for Storage.connect and .disconnect methods. """
 
         def test_multiple_disconnects(self):
             """Should be able to call .disconnect multiple times."""
             self.s.disconnect()
             self.s.disconnect()
 
-    class Storage_add_remove_TestCase (StorageTestCase):
-        """Test cases for Storage.add, .remove, and .recursive_remove methods."""
+    class Storage_add_remove_TestCase(StorageTestCase):
+        """Test cases for Storage.add, .remove, and .recursive_remove
+            methods.
+        """
 
         def test_initially_empty(self):
             """New repository should be empty."""
@@ -629,7 +648,7 @@ if TESTING == True:
         def test_add_identical_rooted(self):
             """Adding entries with the same ID should not increase the number of children.
             """
-            for i in range(10):
+            for _ in range(10):
                 self.s.add('some id', directory=False)
                 s = sorted(self.s.children())
                 self.failUnless(s == ['some id'], s)
@@ -664,13 +683,13 @@ if TESTING == True:
             for i in range(10):
                 i_id = str(i)
                 self.s.add(i_id, 'parent', directory=True)
-                for j in range(10): # add some grandkids
+                for j in range(10):  # add some grandkids
                     j_id = str(20*(i+1)+j)
-                    self.s.add(j_id, i_id, directory=(i%2 == 0))
+                    self.s.add(j_id, i_id, directory=(i % 2 == 0))
                     ancestors = sorted(self.s.ancestors(j_id))
                     self.failUnless(ancestors == [i_id, 'parent'],
-                        'Unexpected ancestors for %s/%s, "%s"'
-                        % (i_id, j_id, ancestors))
+                                    'Unexpected ancestors for %s/%s, "%s"'
+                                    % (i_id, j_id, ancestors))
 
         def test_children(self):
             """Non-UUID ids should be returned as such.
@@ -719,7 +738,7 @@ if TESTING == True:
                     % (vars(self.Class)['name']))
             except InvalidDirectory:
                 pass
-            self.failUnless(len(self.s.children('parent')) == 0,
+            self.failUnless(not self.s.children('parent'),
                             self.s.children('parent'))
 
         def test_remove_rooted(self):
@@ -741,12 +760,12 @@ if TESTING == True:
             ids = []
             for i in range(10):
                 ids.append(str(i))
-                self.s.add(ids[-1], 'parent', directory=False)#(i % 2 == 0))
+                self.s.add(ids[-1], 'parent', directory=False)  # (i % 2 == 0))
             for i in range(10):
                 self.s.remove(ids.pop())
                 s = sorted(self.s.children('parent'))
                 self.failUnless(s == ids, '\n  %s\n  !=\n  %s' % (s, ids))
-                if len(s) > 0:
+                if s:
                     s = self.s.children()
                     self.failUnless(s == ['parent'], s)
 
@@ -758,9 +777,9 @@ if TESTING == True:
             for i in range(10):
                 ids.append(str(i))
                 self.s.add(ids[-1], 'parent', directory=(i % 2 == 0))
-            self.s.remove(ids.pop()) # empty directory removal succeeds
+            self.s.remove(ids.pop())  # empty directory removal succeeds
             try:
-                self.s.remove('parent') # empty directory removal succeeds
+                self.s.remove('parent')  # empty directory removal succeeds
                 self.fail(
                     "%s.remove() didn't raise DirectoryNotEmpty"
                     % (vars(self.Class)['name']))
@@ -774,13 +793,14 @@ if TESTING == True:
             for i in range(10):
                 ids.append(str(i))
                 self.s.add(ids[-1], 'parent', directory=True)
-                for j in range(10): # add some grandkids
-                    self.s.add(str(20*(i+1)+j), ids[-1], directory=(i%2 == 0))
+                for j in range(10):  # add some grandkids
+                    self.s.add(str(20*(i+1)+j), ids[-1],
+                               directory=(i % 2 == 0))
             self.s.recursive_remove('parent')
             s = sorted(self.s.children())
             self.failUnless(s == [], s)
 
-    class Storage_get_set_TestCase (StorageTestCase):
+    class Storage_get_set_TestCase(StorageTestCase):
         """Test cases for Storage.get and .set methods."""
 
         id = 'unlikely id'
@@ -790,18 +810,16 @@ if TESTING == True:
             """Get should return specified default if id not in Storage.
             """
             ret = self.s.get(self.id, default=self.val)
-            self.failUnless(ret == self.val,
-                    "%s.get() returned %s not %s"
-                    % (vars(self.Class)['name'], ret, self.val))
+            self.failUnless(ret == self.val, "%s.get() returned %s not %s"
+                            % (vars(self.Class)['name'], ret, self.val))
 
         def test_get_default_exception(self):
             """Get should raise exception if id not in Storage and no default.
             """
             try:
                 ret = self.s.get(self.id)
-                self.fail(
-                    "%s.get() returned %s instead of raising InvalidID"
-                    % (vars(self.Class)['name'], ret))
+                self.fail("%s.get() returned %s instead of raising InvalidID"
+                          % (vars(self.Class)['name'], ret))
             except InvalidID:
                 pass
 
@@ -811,9 +829,8 @@ if TESTING == True:
             self.s.add(self.id, directory=False)
             val = 'UNLIKELY DEFAULT'
             ret = self.s.get(self.id, default=val)
-            self.failUnless(ret == val,
-                    "%s.get() returned %s not %s"
-                    % (vars(self.Class)['name'], ret, val))
+            self.failUnless(ret == val, "%s.get() returned %s not %s"
+                            % (vars(self.Class)['name'], ret, val))
 
         def test_set_exception(self):
             """Set should raise exception if id not in Storage.
@@ -832,9 +849,8 @@ if TESTING == True:
             self.s.add(self.id, directory=False)
             self.s.set(self.id, self.val)
             ret = self.s.get(self.id)
-            self.failUnless(ret == self.val,
-                    "%s.get() returned %s not %s"
-                    % (vars(self.Class)['name'], ret, self.val))
+            self.failUnless(ret == self.val, "%s.get() returned %s not %s"
+                            % (vars(self.Class)['name'], ret, self.val))
 
         def test_unicode_set(self):
             """Set should define the value returned by get.
@@ -843,24 +859,21 @@ if TESTING == True:
             self.s.add(self.id, directory=False)
             self.s.set(self.id, val)
             ret = self.s.get(self.id, decode=True)
-            self.failUnless(type(ret) == types.UnicodeType,
-                    "%s.get() returned %s not UnicodeType"
-                    % (vars(self.Class)['name'], type(ret)))
-            self.failUnless(ret == val,
-                    "%s.get() returned %s not %s"
-                    % (vars(self.Class)['name'], ret, self.val))
+            self.failUnless(isinstance(ret, unicode),
+                            "%s.get() returned %s not UnicodeType"
+                            % (vars(self.Class)['name'], type(ret)))
+            self.failUnless(ret == val, "%s.get() returned %s not %s"
+                            % (vars(self.Class)['name'], ret, self.val))
             ret = self.s.get(self.id)
-            self.failUnless(type(ret) == types.StringType,
-                    "%s.get() returned %s not StringType"
-                    % (vars(self.Class)['name'], type(ret)))
+            self.failUnless(isinstance(ret, str),
+                            "%s.get() returned %s not StringType"
+                            % (vars(self.Class)['name'], type(ret)))
             s = unicode(ret, self.s.encoding)
-            self.failUnless(s == val,
-                    "%s.get() returned %s not %s"
-                    % (vars(self.Class)['name'], s, self.val))
+            self.failUnless(s == val, "%s.get() returned %s not %s"
+                            % (vars(self.Class)['name'], s, self.val))
 
-
-    class Storage_persistence_TestCase (StorageTestCase):
-        """Test cases for Storage.disconnect and .connect methods."""
+    class Storage_persistence_TestCase(StorageTestCase):
+        """ Test cases for Storage.disconnect and .connect methods. """
 
         id = 'unlikely id'
         val = 'unlikely value'
@@ -873,9 +886,8 @@ if TESTING == True:
             self.s.disconnect()
             self.s.connect()
             ret = self.s.get(self.id)
-            self.failUnless(ret == self.val,
-                    "%s.get() returned %s not %s"
-                    % (vars(self.Class)['name'], ret, self.val))
+            self.failUnless(ret == self.val, "%s.get() returned %s not %s"
+                            % (vars(self.Class)['name'], ret, self.val))
 
         def test_empty_get_set_persistence(self):
             """After empty set, get may return either an empty string or default.
@@ -887,8 +899,8 @@ if TESTING == True:
             default = 'UNLIKELY DEFAULT'
             ret = self.s.get(self.id, default=default)
             self.failUnless(ret in ['', default],
-                    "%s.get() returned %s not in %s"
-                    % (vars(self.Class)['name'], ret, ['', default]))
+                            "%s.get() returned %s not in %s"
+                             % (vars(self.Class)['name'], ret, ['', default]))
 
         def test_add_nonrooted_persistence(self):
             """Adding entries should increase the number of children after reconnect.
@@ -905,13 +917,13 @@ if TESTING == True:
             s = self.s.children()
             self.failUnless(s == ['parent'], s)
 
-    class VersionedStorageTestCase (StorageTestCase):
+    class VersionedStorageTestCase(StorageTestCase):
         """Test cases for VersionedStorage methods."""
 
         Class = VersionedStorage
 
-    class VersionedStorage_commit_TestCase (VersionedStorageTestCase):
-        """Test cases for VersionedStorage.commit and revision_ids methods."""
+    class VersionedStorage_commit_TestCase(VersionedStorageTestCase):
+        """ Test cases for VersionedStorage.commit and revision_ids methods. """
 
         id = 'unlikely id'
         val = 'Some value'
@@ -964,17 +976,20 @@ if TESTING == True:
             """
             def val(i):
                 return '%s:%d' % (self.val, i+1)
+
             self.s.add(self.id, directory=False)
             revs = []
             for i in range(10):
                 self.s.set(self.id, val(i))
                 revs.append(self.s.commit('%s: %d' % (self.commit_msg, i),
                                           self.commit_body))
+
             for i in range(10):
                 rev = self.s.revision_id(i+1)
                 self.failUnless(rev == revs[i],
                                 "%s.revision_id(%d) returned %s not %s"
                                 % (vars(self.Class)['name'], i+1, rev, revs[i]))
+
             for i in range(-1, -9, -1):
                 rev = self.s.revision_id(i)
                 self.failUnless(rev == revs[i],
@@ -996,7 +1011,8 @@ if TESTING == True:
                 ret = self.s.get(self.id, revision=revs[i])
                 self.failUnless(ret == val(i),
                                 "%s.get() returned %s not %s for revision %s"
-                                % (vars(self.Class)['name'], ret, val(i), revs[i]))
+                                % (vars(self.Class)['name'], ret, val(i),
+                                   revs[i]))
 
         def test_get_previous_children(self):
             """Children list should be revision dependent.
@@ -1015,14 +1031,13 @@ if TESTING == True:
                 children.append(list(cur_children))
             for i in range(10):
                 ret = sorted(self.s.children('parent', revision=revs[i]))
-                self.failUnless(ret == children[i],
-                                "%s.children() returned %s not %s for revision %s"
-                                % (vars(self.Class)['name'], ret,
-                                   children[i], revs[i]))
+                self.failUnless(
+                    ret == children[i],
+                    "%s.children() returned %s not %s for revision %s"
+                    % (vars(self.Class)['name'], ret, children[i], revs[i]))
 
         def test_avoid_previous_grandchildren(self):
-            """Previous grandchildren should not be returned as children.
-            """
+            """ Previous grandchildren should not be returned as children. """
             self.s.add('parent', directory=True)
             revs = []
             cur_children = []
@@ -1064,7 +1079,7 @@ if TESTING == True:
             self.s.set('moved', 'this entry will be moved')
             self.s.add('removed', parent='dir')
             self.s.set('removed', 'this entry will be deleted')
-            revA = self.s.commit('Initial state')
+            rev = self.s.commit('Initial state')
             self.s.add('new', parent='dir')
             self.s.set('new', 'this entry is new')
             self.s.set('modified', 'a new value')
@@ -1072,8 +1087,8 @@ if TESTING == True:
             self.s.add('moved2', parent='dir')
             self.s.set('moved2', 'this entry will be moved')
             self.s.remove('removed')
-            revB = self.s.commit('Final state')
-            new,mod,rem = self.s.changed(revA)
+            self.s.commit('Final state')
+            new, mod, rem = self.s.changed(rev)
             self.failUnless(sorted(new) == ['moved2', 'new'],
                             'Unexpected new: %s' % new)
             self.failUnless(mod == ['modified'],
@@ -1084,10 +1099,8 @@ if TESTING == True:
     def make_storage_testcase_subclasses(storage_class, namespace):
         """Make StorageTestCase subclasses for storage_class in namespace."""
         storage_testcase_classes = [
-            c for c in (
-                ob for ob in globals().values() if isinstance(ob, type))
-            if issubclass(c, StorageTestCase) \
-                and c.Class == Storage]
+            c for c in (ob for ob in globals().values() if isinstance(ob, type))
+            if issubclass(c, StorageTestCase) and c.Class == Storage]
 
         for base_class in storage_testcase_classes:
             testcase_class_name = storage_class.__name__ + base_class.__name__
@@ -1099,15 +1112,14 @@ if TESTING == True:
             setattr(namespace, testcase_class_name, testcase_class)
 
     def make_versioned_storage_testcase_subclasses(storage_class, namespace):
-        """Make VersionedStorageTestCase subclasses for storage_class in namespace."""
+        """ Make VersionedStorageTestCase subclasses for storage_class in
+            namespace.
+        """
         storage_testcase_classes = [
-            c for c in (
-                ob for ob in globals().values() if isinstance(ob, type))
-            if ((issubclass(c, StorageTestCase) \
-                     and c.Class == Storage)
-                or
-                (issubclass(c, VersionedStorageTestCase) \
-                     and c.Class == VersionedStorage))]
+            c for c in (ob for ob in globals().values() if isinstance(ob, type))
+            if ((issubclass(c, StorageTestCase) and c.Class == Storage) or
+                (issubclass(c, VersionedStorageTestCase) and
+                 c.Class == VersionedStorage))]
 
         for base_class in storage_testcase_classes:
             testcase_class_name = storage_class.__name__ + base_class.__name__
