@@ -611,10 +611,16 @@ class VCS(libbe.storage.base.VersionedStorage):
 
         return -1
 
+    @staticmethod
+    def __installed():  # pylint: disable=no-self-use
+        return True
+
+    @staticmethod
+    def _vcs_installed():
+        return VCS.__installed()
+
     def installed(self):
-        if self.version() is not None:
-            return True
-        return False
+        return self._vcs_installed()
 
     def get_user_id(self):
         """
@@ -1116,7 +1122,7 @@ if libbe.TESTING:
             self.dir = Dir()
             self.dirname = self.dir.path
             self.s = self.Class(repo=self.dirname)
-            if self.s.installed():
+            if self.s.__class__._vcs_installed():
                 self.s.init()
                 self.s.connect()
             else:

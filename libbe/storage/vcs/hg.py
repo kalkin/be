@@ -97,6 +97,10 @@ class Hg(base.VCS):
         os.chdir(cwd)
         return output.getvalue().rstrip('\n')
 
+    @staticmethod
+    def _vcs_intalled():  # pylint: disable=no-self-use
+        return mercurial is not None
+
     def _vcs_get_user_id(self):
         output = self._u_invoke_client(
             'showconfig', 'ui.username').rstrip('\n')

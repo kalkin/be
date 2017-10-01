@@ -21,6 +21,7 @@
 .. _Monotone: http://www.monotone.ca/
 """
 
+import distutils.spawn
 import os
 import os.path
 import random
@@ -55,6 +56,10 @@ class Monotone(base.VCS):
         self._key_dir = None
         self._passphrase = ''
         self.versioned = True
+
+    @staticmethod
+    def _vcs_installed():
+        return distutils.spawn.find_executable(Monotone.client)
 
     def _vcs_version(self):
         try:

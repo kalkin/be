@@ -26,6 +26,7 @@ import codecs
 import os
 import re
 import shutil
+import distutils.spawn
 import sys
 import time # work around http://mercurial.selenic.com/bts/issue618
 import types
@@ -149,6 +150,10 @@ class Darcs(base.VCS):
 
     def _vcs_init(self, path):
         self._u_invoke_client('init', cwd=path)
+
+    @staticmethod
+    def _vcs_installed():
+        return distutils.spawn.find_executable(Darcs.name)
 
     def _vcs_destroy(self):
         vcs_dir = os.path.join(self.repo, '_darcs')

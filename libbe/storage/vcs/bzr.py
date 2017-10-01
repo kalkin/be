@@ -68,6 +68,10 @@ class Bzr(base.VCS):
             return None
         return bzrlib.__version__
 
+    @staticmethod
+    def _vcs_installed():
+        return bzrlib is not None
+
     def _vcs_get_user_id(self):
         # excerpted from bzrlib.builtins.cmd_whoami.run()
         try:

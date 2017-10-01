@@ -24,6 +24,7 @@
 .. _Git: http://git-scm.com/
 """
 
+import distutils.spawn
 import os
 import os.path
 import re
@@ -94,6 +95,10 @@ class PygitGit(base.VCS):
         if _pygit2:
             return getattr(_pygit2, '__version__', '?')
         return None
+
+    @staticmethod
+    def _vcs_installed():
+        return _pygit2 is not None
 
     def _vcs_get_user_id(self):
         try:
@@ -327,6 +332,10 @@ class ExecGit (PygitGit):
         _, output, __ = self._u_invoke_client('rev-parse', '--show-toplevel',
                                               cwd=path)
         return os.path.abspath(output.strip())
+
+    @staticmethod
+    def _vcs_installed():
+        return distutils.spawn.find_executable(ExecGit.name)
 
     def _vcs_init(self, path):
         self._u_invoke_client('init', cwd=path)
