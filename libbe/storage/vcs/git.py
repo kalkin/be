@@ -91,6 +91,7 @@ class PygitGit(base.VCS):
             gitdir = self._pygit_repository
             self._pygit_repository = _pygit2.Repository(gitdir)
 
+    @property
     def _vcs_version(self):
         if _pygit2:
             return getattr(_pygit2, '__version__', '?')
@@ -289,12 +290,16 @@ class ExecGit (PygitGit):
     name='git'
     client='git'
 
+    def __init__(self, *args, **kwargs):
+        super(ExecGit, self).__init__(*args, **kwargs)
+        self.__vcs_version = None
+
+    @property
     def _vcs_version(self):
-        try:
-            status,output,error = self._u_invoke_client('--version')
-        except CommandError:  # command not found?
-            return None
-        return output.strip()
+        if self.__vcs_version is None:
+            _, output, __ = self._u_invoke_client('--version')
+            self.__vcs_version = output.strip().split()[-1]
+        return self.__vcs_version
 
     def _vcs_get_user_id(self):
         status,output,error = self._u_invoke_client(
