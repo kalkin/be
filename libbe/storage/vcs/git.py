@@ -92,7 +92,7 @@ class PygitGit(base.VCS):
 
     def _vcs_version(self):
         if _pygit2:
-            return getattr(_pygit2, '__verison__', '?')
+            return getattr(_pygit2, '__version__', '?')
         return None
 
     def _vcs_get_user_id(self):
