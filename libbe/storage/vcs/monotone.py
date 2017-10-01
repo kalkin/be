@@ -147,7 +147,7 @@ class Monotone(base.VCS):
         os.mkdir(self._key_dir)
         self._u_invoke_client('--db', self._db_path,
                               '--keydir', self._key_dir,
-                              'automate', 'genkey', self._key, self._passphrase)
+                              'automate', 'generate_key', self._key, self._passphrase)
         self._invoke_client('setup', '--db', self._db_path,
                             '--branch', self._branch_name, cwd=path)
 
@@ -231,7 +231,8 @@ class Monotone(base.VCS):
         return children
 
     def _vcs_commit(self, commitfile, allow_empty=False):
-        args = ['commit', '--key', self._key, '--message-file', commitfile]
+        args = ['commit', '--key', self._key, '--keydir', self._key_dir,
+                '--message-file', commitfile]
         kwargs = {'expect': (0, 1)}
         status, output, error = self._invoke_client(*args, **kwargs)
         strings = ['no changes to commit']
