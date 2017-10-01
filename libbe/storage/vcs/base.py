@@ -41,7 +41,6 @@ from libbe.storage.base import EmptyCommit, InvalidRevision, InvalidID
 from libbe.util.utility import Dir, search_parent_directories
 from libbe.util.subproc import invoke
 from libbe.util.plugin import import_by_name
-import libbe.storage.util.upgrade as upgrade
 
 from libbe.unidiff import PatchSet
 
@@ -1070,15 +1069,12 @@ class VCS(libbe.storage.base.VersionedStorage):
     def check_storage_version(self):
         version = self.storage_version()
         if version != libbe.storage.STORAGE_VERSION:
-            upgrade.upgrade(self.repo, version)
+            msg = 'Unsupported version %s\n' +\
+                  'Please use bugseverywhere version <1.2 to upgrade\n'
+            raise Exception(msg % version)
 
     def storage_version(self, revision=None, path=None):
-        """Return the storage version of the on-disk files.
-
-        See Also
-        --------
-        libbe.storage.util.upgrade
-        """
+        """ Return the storage version of the on-disk files. """
         if path is None:
             path = os.path.join(self.repo, '.be', 'version')
         elif not os.path.exists(path):

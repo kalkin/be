@@ -26,7 +26,6 @@ for possible shortcuts.
 ==============  =======================  ================  ===========================
 Package         Role                     Debian_           Gentoo_
 ==============  =======================  ================  ===========================
-PyYAML_         upgrade old BE storage   python-yaml       dev-python/pyyaml
 Jinja_          HTML templating          python-jinja2     dev-python/jinja
 CherryPy_       serve repos over HTTPS   python-cherrypy3  dev-python/cherrypy
 Sphinx_         see :doc:`doc`           python-sphinx     dev-python/sphinx
@@ -34,7 +33,6 @@ numpydoc_       see :doc:`doc`           python-numpydoc   dev-python/numpydoc
 Docutils_       manpage generation       python-docutils   dev-python/docutils
 ==============  =======================  ================  ===========================
 
-.. _PyYAML: http://pyyaml.org/
 .. _Jinja: http://jinja.pocoo.org/
 .. _CherryPy: http://cherrypy.org/
 .. _Sphinx: http://sphinx.pocoo.org/
@@ -101,15 +99,11 @@ See::
 
 for a list of installation options.
 
-You only need YAML support if you will be upgrading a BE repository
-based on ``Bugs Everywhere Directory v1.4`` or earlier (see
-:file:`.be/version`).  If you're installing a fresh instance of BE,
-there's no need to install PyYAML.  Jinja is only used by the ``html``
-command, so there's no need to install Jinja if you don't mind
-avoiding that command.  Similarly, CherryPy is only used for the
-``html`` and ``serve-*`` commands with the ``--ssl`` option set.  The
-other dependencies are only used for :doc:`building these docs <doc>`,
-so feel free to skip them and just use the docs wherever you're
+Jinja is only used by the ``html`` command, so there's no need to install Jinja
+if you don't mind avoiding that command.  Similarly, CherryPy is only used for
+the ``html`` and ``serve-*`` commands with the ``--ssl`` option set.  The other
+dependencies are only used for :doc:`building these docs <doc>`, so feel free to
+skip them and just use the docs wherever you're
 currently reading them.
 
 .. _homepage: http://bugseverywhere.org/
