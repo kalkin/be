@@ -63,8 +63,9 @@ class Bzr(base.VCS):
         base.VCS.__init__(self, *args, **kwargs)
         self.versioned = True
 
+    @property
     def _vcs_version(self):
-        if bzrlib == None:
+        if bzrlib is None:
             return None
         return bzrlib.__version__
 
@@ -90,7 +91,7 @@ class Bzr(base.VCS):
         cmd = bzrlib.builtins.cmd_root()
         cmd.outf = StringIO.StringIO()
         cmd.run(filename=path)
-        if self.version_cmp(2,2,0) < 0:
+        if self < '2.2.0':
             cmd.cleanup_now()
         return cmd.outf.getvalue().rstrip('\n')
 
@@ -98,7 +99,7 @@ class Bzr(base.VCS):
         cmd = bzrlib.builtins.cmd_init()
         cmd.outf = StringIO.StringIO()
         cmd.run(location=path)
-        if self.version_cmp(2,2,0) < 0:
+        if self < '2.2.0':
             cmd.cleanup_now()
 
     def _vcs_destroy(self):
@@ -116,7 +117,7 @@ class Bzr(base.VCS):
             # See: https://lists.ubuntu.com/archives/bazaar/2011q1/071705.html
             kwargs.pop('file_ids_from')
         cmd.run(file_list=[path], **kwargs)
-        if self.version_cmp(2,2,0) < 0:
+        if self < '2.2.0':
             cmd.cleanup_now()
 
     def _vcs_exists(self, path, revision=None):
@@ -132,7 +133,7 @@ class Bzr(base.VCS):
         cmd = bzrlib.builtins.cmd_remove()
         cmd.outf = StringIO.StringIO()
         cmd.run(file_list=[path], file_deletion_strategy='no-backup')
-        if self.version_cmp(2,2,0) < 0:
+        if self < '2.2.0':
             cmd.cleanup_now()
 
     def _vcs_update(self, path):
@@ -155,7 +156,7 @@ class Bzr(base.VCS):
         revision = self._parse_revision_string(revision)
         cmd = bzrlib.builtins.cmd_cat()
         cmd.outf = StringIO.StringIO()
-        if self.version_cmp(1,6,0) < 0:
+        if self < '1.6.0':
             # old bzrlib cmd_cat uses sys.stdout not self.outf for output.
             stdout = sys.stdout
             sys.stdout = cmd.outf
@@ -166,10 +167,10 @@ class Bzr(base.VCS):
                 raise base.InvalidPath(path, root=self.repo, revision=revision)
             raise
         finally:
-            if self.version_cmp(2,0,0) < 0:
+            if self < '2.0.0':
                 cmd.outf = sys.stdout
                 sys.stdout = stdout
-            if self.version_cmp(2,2,0) < 0:
+            if self < '2.2.0':
                 cmd.cleanup_now()
         return cmd.outf.getvalue()
 
@@ -193,7 +194,7 @@ class Bzr(base.VCS):
         cmd = bzrlib.builtins.cmd_ls()
         cmd.outf = StringIO.StringIO()
         try:
-            if self.version_cmp(2,0,0) >= 0:
+            if self >= '2.0.0':
                 cmd.run(revision=revision, path=path, recursive=recursive)
             else:
                 # Pre-2.0 Bazaar (non_recursive)
@@ -206,11 +207,11 @@ class Bzr(base.VCS):
                 raise base.InvalidPath(path, root=self.repo, revision=revision)
             raise
         finally:
-            if self.version_cmp(2,2,0) < 0:
+            if self < '2.2.0':
                 cmd.cleanup_now()
         children = cmd.outf.getvalue().rstrip('\n').splitlines()
         children = [self._u_rel_path(c, path) for c in children]
-        if self.version_cmp(2,0,0) < 0 and recursive == False:
+        if self < '2.0.0' and not recursive:
             children = [c for c in children if os.path.sep not in c]
         return children
 
@@ -229,7 +230,7 @@ class Bzr(base.VCS):
             raise
         finally:
             os.chdir(cwd)
-            if self.version_cmp(2,2,0) < 0:
+            if self < '2.2.0':
                 cmd.cleanup_now()
         return self._vcs_revision_id(-1)
 
@@ -237,7 +238,7 @@ class Bzr(base.VCS):
         cmd = bzrlib.builtins.cmd_revno()
         cmd.outf = StringIO.StringIO()
         cmd.run(location=self.repo)
-        if self.version_cmp(2,2,0) < 0:
+        if self < '2.2.0':
             cmd.cleanup_now()
         current_revision = int(cmd.outf.getvalue())
         if index > current_revision or index < -current_revision:
@@ -257,7 +258,7 @@ class Bzr(base.VCS):
             status = cmd.run(revision=revision, file_list=[self.repo])
         finally:
             sys.stdout = stdout
-            if self.version_cmp(2,2,0) < 0:
+            if self < '2.2.0':
                 cmd.cleanup_now()
         assert status in [0,1], "Invalid status %d" % status
         return cmd.outf.getvalue()

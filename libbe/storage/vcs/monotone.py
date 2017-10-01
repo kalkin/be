@@ -52,72 +52,43 @@ class Monotone(base.VCS):
         self._branch_name = 'bugs-everywhere-test'
         self._db_path = None
         self._key = 'bugseverywhere-%d@test.com' % random.randint(0, 1e6)
-        self._key = None
         self._key_dir = None
         self._passphrase = ''
         self.versioned = True
+        self.__vcs_version = None
 
     @staticmethod
     def _vcs_installed():
         return distutils.spawn.find_executable(Monotone.client)
 
+    @property
     def _vcs_version(self):
-        try:
-            _, output, __ = self._u_invoke_client('automate',
-                                                  'interface_version')
-        except CommandError:  # command not found?
-            return None
-        return output.strip()
+        if not self.__vcs_version:
+            try:
+                _, output, __ = self._u_invoke_client('automate',
+                                                      'interface_version')
+            except CommandError:  # command not found?
+                return None
+            self.__vcs_version = output.strip() + ".0"
+        return self.__vcs_version
 
-    def version_cmp(self, *args):
-        """Compare the installed Monotone version `V_i` with another
-        version `V_o` (given in `*args`).  Returns
-
-           === ===============
-            1  if `V_i > V_o`
-            0  if `V_i == V_o`
-           -1  if `V_i < V_o`
-           === ===============
-
-        Examples
-        --------
-
-        >>> m = Monotone(repo='.')
-        >>> m._version = '7.1'
-        >>> m.version_cmp(7, 1)
-        0
-        >>> m.version_cmp(7, 2)
-        -1
-        >>> m.version_cmp(7, 0)
-        1
-        >>> m.version_cmp(8, 0)
-        -1
-        """
-        if not hasattr(self, '_parsed_version') or self._parsed_version is None:
-            self._parsed_version = [int(x) for x in self.version().split('.')]
-        for current,other in zip(self._parsed_version, args):
-            c = cmp(current,other)
-            if c != 0:
-                return c
-        return 0
-
-    def _require_version_ge(self, *args):
+    def _require_version_ge(self, version):
         """Require installed interface version >= `*args`.
 
         >>> m = Monotone(repo='.')
-        >>> m._version = '7.1'
-        >>> m._require_version_ge(6, 0)
-        >>> m._require_version_ge(7, 1)
-        >>> m._require_version_ge(7, 2)
+        >>> m.__vcs_version = '7.1.0'
+        >>> m._require_version_ge('6.0')
+        >>> m._require_version_ge('7.1')
+        >>> m._require_version_ge('7.2')
         Traceback (most recent call last):
           ...
         NotImplementedError: Operation not supported for monotone automation interface version 7.1.  Requires 7.2
         """
-        if self.version_cmp(*args) < 0:
+        version += '.0'
+        if self < version:
             raise NotImplementedError(
                 'Operation not supported for %s automation interface version'
-                ' %s.  Requires %s' % (self.name, self.version(),
-                                       '.'.join([str(x) for x in args])))
+                ' %s.  Requires %s' % (self.name, self._vcs_version, version))
 
     def _vcs_get_user_id(self):
         _, output, __ = self._u_invoke_client('list', 'keys')
@@ -140,7 +111,7 @@ class Monotone(base.VCS):
 
     def _vcs_root(self, path):
         """Find the root of the deepest repository containing path."""
-        if self.version_cmp(8, 0) >= 0:
+        if self >= '8.0':
             if not os.path.isdir(path):
                 dirname = os.path.dirname(path)
             else:
@@ -169,7 +140,7 @@ class Monotone(base.VCS):
         return self._u_invoke_client(*args, **kwargs)
 
     def _vcs_init(self, path):
-        self._require_version_ge(4, 0)
+        self._require_version_ge('4.0')
         self._db_path = os.path.abspath(os.path.join(path, 'bugseverywhere.db'))
         self._key_dir = os.path.abspath(os.path.join(path, '_monotone_keys'))
         self._u_invoke_client('db', 'init', '--db', self._db_path, cwd=path)
@@ -204,13 +175,13 @@ class Monotone(base.VCS):
         if revision is None:
             return base.VCS._vcs_get_file_contents(self, path, revision)
 
-        self._require_version_ge(4, 0)
+        self._require_version_ge('4.0')
         _, output, __ = self._invoke_client('automate', 'get_file_of',
                                             path, '--revision', revision)
         return output
 
     def _dirs_and_files(self, revision):
-        self._require_version_ge(2, 0)
+        self._require_version_ge('2.0')
         _, output, __ = self._invoke_client('automate', 'get_manifest_of',
                                             revision)
         dirs = []
@@ -280,7 +251,7 @@ class Monotone(base.VCS):
         return current_rev
 
     def _current_revision(self):
-        self._require_version_ge(2, 0)
+        self._require_version_ge('2.0')
         _, output, __ = self._invoke_client('automate', 'get_base_revision_id')
         return output.strip()
 

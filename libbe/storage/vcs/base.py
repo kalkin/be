@@ -33,6 +33,8 @@ import shutil
 import sys
 import tempfile
 
+import semver
+
 import libbe
 import libbe.storage
 import libbe.util.encoding
@@ -91,12 +93,12 @@ def vcs_by_name(vcs_name):
     return _get_matching_vcs(lambda vcs: vcs.name == vcs_name)
 
 
-def detect_vcs(dir):
+def detect_vcs(_dir):
     """Return an VCS instance for the vcs being used in this directory.
 
     Searches in :py:data:`VCS_ORDER`.
     """
-    return _get_matching_vcs(lambda vcs: vcs._detect(dir))
+    return _get_matching_vcs(lambda vcs: vcs._detect(_dir))
 
 
 def installed_vcs():
@@ -365,14 +367,7 @@ class VCS(libbe.storage.base.VersionedStorage):
         self.versioned = False
         self._cached_path_id = CachedPathID()
         self._rooted = False
-        self._parsed_version = None
-        self._version = None
-
-    def _vcs_version(self):  # pylint: disable=no-self-use
-        """
-        Return the VCS version string.
-        """
-        return '0'
+        self.__vcs_version = None
 
     def _vcs_get_user_id(self):  # pylint: disable=no-self-use
         """
@@ -516,100 +511,89 @@ class VCS(libbe.storage.base.VersionedStorage):
         patch = PatchSet.from_string(output)
         return patch.changed_files
 
+
+    @property
+    def _vcs_version(self):
+        return self.__vcs_version
+
+    @property
     def version(self):
-        # Cache version string for efficiency.
-        if self._version is None:
-            self._version = self._vcs_version()
-        return self._version
+        # type: () -> VersionInfo
+        try:
+            return semver.parse_version_info(self._vcs_version)
+        except ValueError:
+            ver_str = VCS.convert_to_semver(self._vcs_version)
+            return semver.parse_version_info(ver_str)
+        return None
 
-    def version_cmp(self, *args):
-        """Compare the installed VCS version `V_i` with another version
-        `V_o` (given in `*args`).  Returns
+    @staticmethod
+    def convert_to_semver(ver_str):
+        """ Convert a version string to semver string.
 
-           === ===============
-            1  if `V_i > V_o`
-            0  if `V_i == V_o`
-           -1  if `V_i < V_o`
-           === ===============
+            >>> VCS.convert_to_semver('2.3')
+            '2.3.0'
 
-        Examples
-        --------
+            >>> VCS.convert_to_semver('2.3rc1')
+            '2.3.0-rc1'
 
-        >>> v = VCS(repo='.')
-        >>> v._version = '2.3.1 (release)'
-        >>> v.version_cmp(2,3,1)
-        0
-        >>> v.version_cmp(2,3,2)
-        -1
-        >>> v.version_cmp(2,3,'a',5)
-        1
-        >>> v.version_cmp(2,3,0)
-        1
-        >>> v.version_cmp(2,3,1,'a',5)
-        1
-        >>> v.version_cmp(2,3,1,1)
-        -1
-        >>> v.version_cmp(3)
-        -1
-        >>> v._version = '2.0.0pre2'
-        >>> v._parsed_version = None
-        >>> v.version_cmp(3)
-        -1
-        >>> v.version_cmp(2,0,1)
-        -1
-        >>> v.version_cmp(2,0,0,'pre',1)
-        1
-        >>> v.version_cmp(2,0,0,'pre',2)
-        0
-        >>> v.version_cmp(2,0,0,'pre',3)
-        -1
-        >>> v.version_cmp(2,0,0,'a',3)
-        1
-        >>> v.version_cmp(2,0,0,'rc',1)
-        -1
+            >>> VCS.convert_to_semver('1.3.0dev-4')
+            '1.3.0-dev.4'
+
+            >>> VCS.convert_to_semver('1.4.1rc4')
+            '1.4.1-rc4'
+
         """
-        if self._parsed_version is None:
-            num_part = self.version().split(' ')[0]
-            self._parsed_version = []
-            for num in num_part.split('.'):
-                try:
-                    self._parsed_version.append(int(num))
-                except ValueError:
-                    # bzr version number might contain non-numerical tags
-                    splitter = re.compile(r'[\D]')  # Match non-digits
-                    splits = splitter.split(num)
-                    # if len(tag) > 1 some splits will be empty; remove
-                    splits = [s for s in splits if s]
-                    tag_starti = len(splits[0])
-                    num_starti = num.find(splits[1], tag_starti)
-                    tag = num[tag_starti:num_starti]
-                    self._parsed_version.append(int(splits[0]))
-                    self._parsed_version.append(tag)
-                    self._parsed_version.append(int(splits[1]))
-        for current, other in zip(self._parsed_version, args):
-            if not isinstance(current, other.__class__):
-                # one of them is a pre-release string
-                if not isinstance(current, int):
-                    return -1
-                return 1
-            c = cmp(current, other)
-            if c != 0:
-                return c
-        # see if one is longer than the other
-        verlen = len(self._parsed_version)
-        arglen = len(args)
-        if verlen == arglen:
-            return 0
-        elif verlen > arglen:
-            if not isinstance(self._parsed_version[arglen], int):
-                return -1  # self is a prerelease
+        version_re = r'(?P<major>\d+)\.(?P<minor>\d+)'\
+                     r'\.?((?P<patch>\d+))?\.?(?P<rest>[\w\d-]+)?'
+        match = re.search(version_re, ver_str)
+        result = match.group('major') + '.' + match.group('minor')
 
-            return 1
+        patch = match.group('patch')
+        if patch:
+            result += '.' + patch
+        else:
+            result += '.0'
 
-        if not isinstance(args[verlen], int):
-            return 1  # args is a prerelease
+        rest = match.group('rest')
+        if rest:
+            result += '-' + rest.replace('-', '.')
 
-        return -1
+        return result
+
+    def __lt__(self, other):
+        other_version = VCS._str_to_version(other)
+        return self.version.__lt__(other_version)
+
+    def __le__(self, other):
+        other = VCS._str_to_version(other)
+        if self.__lt__(other):
+            return True
+
+        other_version = VCS._str_to_version(other)
+        return self.version.__eq__(other_version)
+
+    def __gt__(self, other):
+        return not self.__lt__(other)
+
+    def __ge__(self, other):
+        if not self.__lt__(other):
+            return True
+        other_version = VCS._str_to_version(other)
+        return self.version.__eq__(other_version)
+
+    @staticmethod
+    def _str_to_version(version):
+        if isinstance(version, str):
+            dots = version.count('.')  # pylint: disable=no-member
+            if dots < 2:
+                for _ in range(dots, 2):
+                    version += ".0"
+            return semver.parse_version_info(version)
+        elif isinstance(version, VCS):
+            return version.version
+        else:
+            msg = "You should compare to a str or a VCS instance"
+            raise Exception(msg)
 
     @staticmethod
     def __installed():  # pylint: disable=no-self-use

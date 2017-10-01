@@ -22,14 +22,12 @@
 .. _Darcs: http://darcs.net/
 """
 
-import codecs
 import os
 import re
 import shutil
 import distutils.spawn
 import sys
-import time # work around http://mercurial.selenic.com/bts/issue618
-import types
+import time  # work around http://mercurial.selenic.com/bts/issue618
 from xml.etree import ElementTree
 from xml.sax.saxutils import unescape
 
@@ -37,7 +35,7 @@ import libbe
 from ...util.subproc import CommandError
 from . import base
 
-if libbe.TESTING == True:
+if libbe.TESTING:
     import doctest
     import unittest
 
@@ -56,63 +54,13 @@ class Darcs(base.VCS):
         self.versioned = True
         self.__updated = [] # work around http://mercurial.selenic.com/bts/issue618
 
+    @property
     def _vcs_version(self):
         try:
             status,output,error = self._u_invoke_client('--version')
         except CommandError:  # command not found?
             return None
-        return output.strip()
-
-    def version_cmp(self, *args):
-        """Compare the installed Darcs version `V_i` with another version
-        `V_o` (given in `*args`).  Returns
-
-           === ===============
-            1  if `V_i > V_o`
-            0  if `V_i == V_o`
-           -1  if `V_i < V_o`
-           === ===============
-
-        Examples
-        --------
-
-        >>> d = Darcs(repo='.')
-        >>> d._version = '2.3.1 (release)'
-        >>> d.version_cmp(2,3,1)
-        0
-        >>> d.version_cmp(2,3,2)
-        -1
-        >>> d.version_cmp(2,3,0)
-        1
-        >>> d.version_cmp(3)
-        -1
-        >>> d._version = '2.0.0pre2'
-        >>> d._parsed_version = None
-        >>> d.version_cmp(3)
-        -1
-        >>> d.version_cmp(2,0,1)
-        Traceback (most recent call last):
-          ...
-        NotImplementedError: Cannot parse non-integer portion "0pre2" of Darcs version "2.0.0pre2"
-        """
-        if not hasattr(self, '_parsed_version') \
-                or self._parsed_version == None:
-            num_part = self.version().split(' ')[0]
-            self._parsed_version = []
-            for num in num_part.split('.'):
-                try:
-                    self._parsed_version.append(int(num))
-                except ValueError, e:
-                    self._parsed_version.append(num)
-        for current,other in zip(self._parsed_version, args):
-            if type(current) != types.IntType:
-                raise NotImplementedError(
-                    'Cannot parse non-integer portion "%s" of Darcs version "%s"'
-                    % (current, self.version()))
-            c = cmp(current,other)
-            if c != 0:
-                return c
-        return 0
+        return output.strip().split()[0]
 
     def _vcs_get_user_id(self):
         # following http://darcs.net/manual/node4.html#SECTION00410030000000000000
@@ -163,7 +111,7 @@ class Darcs(base.VCS):
     def _vcs_add(self, path):
         if os.path.isdir(path):
             return
-        if self.version_cmp(0, 9, 10) == 1:
+        if self > '0.9.10':
             self._u_invoke_client('add', '--boring', path)
         else:  # really old versions <= 0.9.10 lack --boring
             self._u_invoke_client('add', path)
@@ -179,7 +127,7 @@ class Darcs(base.VCS):
     def _vcs_get_file_contents(self, path, revision=None):
         if revision == None:
             return base.VCS._vcs_get_file_contents(self, path, revision)
-        if self.version_cmp(2, 0, 0) == 1:
+        if self > '2.0.0':
             status,output,error = self._u_invoke_client( \
                 'show', 'contents', '--patch', revision, path)
             return output
@@ -208,7 +156,7 @@ class Darcs(base.VCS):
         return self._u_find_id(id, revision)
 
     def _vcs_isdir(self, path, revision):
-        if self.version_cmp(2, 3, 1) == 1:
+        if self > '2.3.1':
             # Sun Nov 15 20:32:06 EST 2009  thomashartman1@gmail.com
             #   * add versioned show files functionality (darcs show files -p 'some patch')
             _, output, __ = self._u_invoke_client(
@@ -224,7 +172,7 @@ class Darcs(base.VCS):
             'Darcs versions <= 2.3.1 lack the --patch option for "show files"')
 
     def _vcs_listdir(self, path, revision):
-        if self.version_cmp(2, 3, 1) == 1:
+        if self > '2.3.1':
             # Sun Nov 15 20:32:06 EST 2009  thomashartman1@gmail.com
             #   * add versioned show files functionality (darcs show files -p 'some patch')
             # Wed Dec  9 05:42:21 EST 2009  Luca Molteni <volothamp@gmail.com>

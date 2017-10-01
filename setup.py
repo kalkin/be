@@ -65,5 +65,6 @@ setup(
     requires=[
         'Jinja2 (>=2.6)',
         'CherryPy (>=3.2)',
+        'semver'
         ]
     )

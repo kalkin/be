@@ -71,11 +71,11 @@ class Hg(base.VCS):
     def __init__(self, *args, **kwargs):
         base.VCS.__init__(self, *args, **kwargs)
         self.versioned = True
-        self.__updated = [] # work around http://mercurial.selenic.com/bts/issue618
+        # work around http://mercurial.selenic.com/bts/issue618
+        self.__updated = []
 
+    @property
     def _vcs_version(self):
-        if version == None:
-            return None
         return version()
 
     def _u_invoke_client(self, *args, **kwargs):
@@ -86,7 +86,7 @@ class Hg(base.VCS):
         fullargs.extend(args)
         cwd = os.getcwd()
         output = StringIO.StringIO()
-        if self.version_cmp(1,9) >= 0:
+        if self >= '1.9':
             req = mercurial.dispatch.request(fullargs, fout=output)
             mercurial.dispatch.dispatch(req)
         else:
