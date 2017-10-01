@@ -1099,13 +1099,10 @@ class VCS(libbe.storage.base.VersionedStorage):
                 libbe.storage.STORAGE_VERSION+'\n')
             self._vcs_add(self._u_rel_path(path))
 
-
 if libbe.TESTING:
     class VCSTestCase(unittest.TestCase):
-        """
-        Test cases for base VCS class (in addition to the Storage test
-        cases).
-        """
+        """ Test cases for base VCS class (in addition to the Storage test
+            cases). """
 
         Class = VCS
 
@@ -1122,6 +1119,8 @@ if libbe.TESTING:
             if self.s.installed():
                 self.s.init()
                 self.s.connect()
+            else:
+                self.skipTest('%(name)s VCS not found' % vars(self.Class))
 
         def tearDown(self):
             super(VCSTestCase, self).tearDown()
@@ -1130,13 +1129,11 @@ if libbe.TESTING:
                 self.s.destroy()
             self.dir.cleanup()
 
-    class VCS_installed_TestCase(VCSTestCase):
         def test_installed(self):
             """ See if the VCS is installed. """
             if not self.s.installed():
                 self.skipTest('%(name)s VCS not found' % vars(self.Class))
 
-    class VCS_detection_TestCase(VCSTestCase):
         def test_detection(self):
             """ See if the VCS detects its installed repository """
             if self.s.installed():
@@ -1166,7 +1163,6 @@ if libbe.TESTING:
                 dp == rp or rp is None,
                 "%(vcs_name)s VCS root in wrong dir (%(dp)s %(rp)s)" % vars())
 
-    class VCS_get_user_id_TestCase(VCSTestCase):
         """ Test cases for VCS.get_user_id method. """
 
         def test_get_existing_user_id(self):
