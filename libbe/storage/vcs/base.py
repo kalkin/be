@@ -35,7 +35,6 @@ import tempfile
 
 import libbe
 import libbe.storage
-import libbe.storage.base
 import libbe.util.encoding
 from libbe.storage.base import EmptyCommit, InvalidRevision, InvalidID
 from libbe.util.utility import Dir, search_parent_directories
