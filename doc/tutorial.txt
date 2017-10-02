@@ -75,11 +75,11 @@ will give help on the ``init`` command.
 Initialization
 --------------
 
-You're happily coding in your Arch_ / Bazaar_ / Darcs_ / Git_ /
-Mercurial_  versioned project and you discover a bug.
-You think, "Hmm, I'll need a simple way to track these things".  This
-is where BE comes in.  One of the benefits of distributed versioning
-systems is the ease of repository creation, and BE follows this trend.
+You're happily coding in your  Bazaar_ / Darcs_ / Git_ / Mercurial_  versioned
+project and you discover a bug.  You think, "Hmm, I'll need a simple way to
+track these things".  This is where BE comes in.  One of the benefits of
+distributed versioning systems is the ease of repository creation, and BE
+follows this trend.
 Just type::
 
     $ be init
@@ -95,7 +95,6 @@ be versioned starting with your next commit.  See::
 for specific details about where the ``.be`` directory will end up
 if you call it from a directory besides your project's root.
 
-.. _Arch: http://www.gnu.org/software/gnu-arch/
 .. _Bazaar: http://bazaar.canonical.com/
 .. _Darcs: http://darcs.net/
 .. _Git: http://git-scm.com/

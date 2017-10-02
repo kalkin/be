@@ -2,8 +2,8 @@ Welcome to the bugs-everywhere documentation!
 =============================================
 
 Bugs Everywhere (BE) is a bugtracker built on distributed version control.  It
-works with Arch_, Bazaar_, Darcs_, Git_, and Mercurial_ at the moment, but is
-easily extensible.  It can also function with no VCS at all.
+works with Bazaar_, Darcs_, Git_, and Mercurial_ at the moment, but is easily
+extensible.  It can also function with no VCS at all.
 
 .. _Bazaar: http://bazaar.canonical.com/
 .. _Darcs: http://darcs.net/
