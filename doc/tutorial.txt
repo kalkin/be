@@ -76,7 +76,7 @@ Initialization
 --------------
 
 You're happily coding in your Arch_ / Bazaar_ / Darcs_ / Git_ /
-Mercurial_ / Monotone_ versioned project and you discover a bug.
+Mercurial_  versioned project and you discover a bug.
 You think, "Hmm, I'll need a simple way to track these things".  This
 is where BE comes in.  One of the benefits of distributed versioning
 systems is the ease of repository creation, and BE follows this trend.
@@ -100,7 +100,6 @@ if you call it from a directory besides your project's root.
 .. _Darcs: http://darcs.net/
 .. _Git: http://git-scm.com/
 .. _Mercurial: http://mercurial.selenic.com/
-.. _Monotone: http://www.monotone.ca/
 
 Inside the ``.be`` directory (among other things) there will be a long
 UUID_ directory.  This is your bug directory.  The idea is that you
