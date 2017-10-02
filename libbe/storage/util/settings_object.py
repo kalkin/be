@@ -498,27 +498,9 @@ if libbe.TESTING == True:
                     settings_properties=settings_properties,
                     required_saved_properties=required_saved_properties)
                 def content_type(): return {}
-            t = Test()
-            self.failUnless(t.settings == {}, t.settings)
-            self.failUnless(t.content_type == "text/plain", t.content_type)
-            self.failUnless(t.settings == {"Content-type":EMPTY},
-                            t.settings)
-            self.failUnless(t.load_count == 1, t.load_count)
-            self.failUnless(len(t.storage) == 0, len(t.storage))
-            self.failUnless(t._get_saved_settings() == {},
-                            t._get_saved_settings())
-            t.content_type = "text/html"
-            self.failUnless(t.content_type == "text/html",
-                            t.content_type)
-            self.failUnless(t.settings == {"Content-type":"text/html"},
-                            t.settings)
-            self.failUnless(t.load_count == 1, t.load_count)
-            self.failUnless(len(t.storage) == 1, len(t.storage))
-            self.failUnless(t.storage == [{'Content-type':'text/html'}],
-                            t.storage)
-            self.failUnless(t._get_saved_settings() == \
-                                {"Content-type":"text/html"},
-                            t._get_saved_settings())
+
+            self.assert_versioned_property(Test, {})
+
         def testRequiredDefaultingProperty(self):
             """Testing a required defaulting versioned property"""
             class Test (TestObject):
@@ -532,15 +514,18 @@ if libbe.TESTING == True:
                     required_saved_properties=required_saved_properties,
                     require_save=True)
                 def content_type(): return {}
-            t = Test()
+
+            self.assert_versioned_property(Test, {'Content-type': 'text/plain'})
+
+        def assert_versioned_property(self, klass, settings_content_type):
+            t = klass()
             self.failUnless(t.settings == {}, t.settings)
             self.failUnless(t.content_type == "text/plain", t.content_type)
             self.failUnless(t.settings == {"Content-type":EMPTY},
                             t.settings)
             self.failUnless(t.load_count == 1, t.load_count)
             self.failUnless(len(t.storage) == 0, len(t.storage))
-            self.failUnless(t._get_saved_settings() == \
-                                {"Content-type":"text/plain"},
+            self.failUnless(t._get_saved_settings() == settings_content_type,
                             t._get_saved_settings())
             t.content_type = "text/html"
             self.failUnless(t.content_type == "text/html",
@@ -551,9 +536,9 @@ if libbe.TESTING == True:
             self.failUnless(len(t.storage) == 1, len(t.storage))
             self.failUnless(t.storage == [{'Content-type':'text/html'}],
                             t.storage)
-            self.failUnless(t._get_saved_settings() == \
-                                {"Content-type":"text/html"},
+            self.failUnless(t._get_saved_settings() == {"Content-type":"text/html"},
                             t._get_saved_settings())
+
         def testClassVersionedPropertyDefinition(self):
             """Testing a class-specific _versioned property decorator"""
             class Test (TestObject):
