@@ -509,38 +509,9 @@ if libbe.TESTING == True:
             self.failUnless(c4.body == 'And thanks\n', c4.body)
         def testAddOnly(self):
             bugB = self.bugdir.bug_from_uuid('b')
-            initial_bugB_summary = bugB.summary
             self._execute(self.xml, {'add-only':True}, ['-'])
-            uuids = list(self.bugdir.uuids())
-            self.failUnless(uuids == ['b'], uuids)
-            bugB = self.bugdir.bug_from_uuid('b')
-            self.failUnless(bugB.uuid == 'b', bugB.uuid)
-            self.failUnless(bugB.creator == 'John', bugB.creator)
-            self.failUnless(bugB.status == 'open', bugB.status)
-            self.failUnless(bugB.summary == initial_bugB_summary, bugB.summary)
-            estrs = ["don't forget your towel",
-                     'helps with space travel']
-            self.failUnless(bugB.extra_strings == estrs, bugB.extra_strings)
-            comments = list(bugB.comments())
-            self.failUnless(len(comments) == 3,
-                            ['%s (%s)' % (c.uuid, c.alt_id) for c in comments])
-            c1 = bugB.comment_from_uuid('c1')
-            comments.remove(c1)
-            self.failUnless(c1.uuid == 'c1', c1.uuid)
-            self.failUnless(c1.alt_id == None, c1.alt_id)
-            self.failUnless(c1.author == 'Jane', c1.author)
-            self.failUnless(c1.body == 'Hello\n', c1.body)
-            c2 = bugB.comment_from_uuid('c2')
-            comments.remove(c2)
-            self.failUnless(c2.uuid == 'c2', c2.uuid)
-            self.failUnless(c2.alt_id == None, c2.alt_id)
-            self.failUnless(c2.author == 'Jess', c2.author)
-            self.failUnless(c2.body == 'World\n', c2.body)
-            c4 = comments[0]
-            self.failUnless(len(c4.uuid) == 36, c4.uuid)
-            self.failUnless(c4.alt_id == 'c3', c4.alt_id)
-            self.failUnless(c4.author == 'Jed', c4.author)
-            self.failUnless(c4.body == 'And thanks\n', c4.body)
+            self._helper_add_only(bugB)
+
         def testRootCommentsNotAddOnly(self):
             bugB = self.bugdir.bug_from_uuid('b')
             initial_bugB_summary = bugB.summary
@@ -577,11 +548,15 @@ if libbe.TESTING == True:
             self.failUnless(c4.alt_id == 'c3', c4.alt_id)
             self.failUnless(c4.author == 'Jed', c4.author)
             self.failUnless(c4.body == 'And thanks\n', c4.body)
+
         def testRootCommentsAddOnly(self):
             bugB = self.bugdir.bug_from_uuid('b')
-            initial_bugB_summary = bugB.summary
             self._execute(self.root_comment_xml,
                           {'root':'/b', 'add-only':True}, ['-'])
+            self._helper_add_only(bugB)
+
+        def _helper_add_only(self, bugB):
+            initial_bugB_summary = bugB.summary
             uuids = list(self.bugdir.uuids())
             self.failUnless(uuids == ['b'], uuids)
             bugB = self.bugdir.bug_from_uuid('b')
