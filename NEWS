@@ -1,3 +1,9 @@
+Oktober 02, 2017
+ * Drop support for arch
+ * Drop support for monotone
+ * Drop support for upgrading from directiory versions before 1.5
+ * Use $PAGER for most commands
+
 April 16, 2011
  * Added --preserve-uuids to `be import-xml`.
  * Added --assigned, --severity, and --status to `be new`.
