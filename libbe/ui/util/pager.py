@@ -41,7 +41,7 @@ def run_pager(paginate='auto'):
         `PAGER`.  The child keeps the original stdin, and the child's stdout
         becomes the parent's stdin.  The parent keeps the original stdout.
     """
-    if pager_needed(paginate):
+    if not pager_needed(paginate):
         return
 
     pager = _os.environ.get('PAGER', 'less')
@@ -74,18 +74,17 @@ def run_pager(paginate='auto'):
 
 def pager_needed(paginate):
     """ Check if pager is needed """
-    return paginate == 'never' or _sys.platform == 'win32'\
-        or not hasattr(_sys.stdout, 'isatty')\
-        or not _sys.stdout.isatty()
+    return paginate != 'never' and _sys.platform != 'win32'\
+        and (hasattr(_sys.stdout, 'isatty') or _sys.stdout.isatty())
 
 
 def prepare_env(paginate):
     """ Configure LESS pager in the environment. """
     env = dict(_os.environ)
 
-    if paginate == 'auto' and 'LESS' not in env:
+    if paginate == 'always' and 'LESS' not in env:
         env['LESS'] = ''  # += doesn't work on undefined var
-    elif paginate == 'auto':
+    elif paginate == 'always':
         env['LESS'] += ' '  # separate from existing variables
     else:
         # don't page if the input is short enough
