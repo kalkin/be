@@ -60,7 +60,11 @@ setup(
               'libbe.interfaces',
               'libbe.interfaces.web'],
     package_data={'libbe.interfaces.web': ['templates/*.html', 'static/**/*.js', 'static/**/*.css']},
-    scripts=['be'],
+    entry_points={
+        'console_scripts': {
+            'be = libbe.ui.command_line:main'
+            }
+        },
     data_files=data_files,
     requires=[
         'Jinja2 (>=2.6)',
