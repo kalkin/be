@@ -22,12 +22,11 @@ if os.path.exists(man_path):
 setup(
     name='bugs-everywhere',
     version='{}'.format(version.version()),
-    maintainer='W. Trevor King',
-    maintainer_email='wking@tremily.us',
-    url='http://bugseverywhere.org/',
-    download_url=(
-        'http://downloads.bugseverywhere.org/releases/be-{}.tar.gz'.format(
-            version.version())),
+    maintainer='Bahtiar `kalkin` Gadimov',
+    maintainer_email='bahtiar@gadimov.de',
+    url='https://github.com/kalkin/be',
+    download_url=('https://github.com/kalkin/be/archive/v{}.tar.gz'
+                  .format(version.version())),
     license='GNU General Public License (GPL)',
     platforms=['all'],
     description='Bugtracker supporting distributed revision control',
@@ -59,7 +58,9 @@ setup(
               'libbe.util',
               'libbe.interfaces',
               'libbe.interfaces.web'],
-    package_data={'libbe.interfaces.web': ['templates/*.html', 'static/**/*.js', 'static/**/*.css']},
+    package_data={'libbe.interfaces.web': ['templates/*.html',
+                                           'static/**/*.js',
+                                           'static/**/*.css']},
     entry_points={
         'console_scripts': {
             'be = libbe.ui.command_line:main'
