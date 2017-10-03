@@ -19,7 +19,7 @@
 
 
 
-        "BLOCKS:7eb0c2b7-3697-4e1c-9ee6-533e89497121"
+        "BLOCKED-BY:2d132801-ddc7-452e-a34a-02067e90af0a"
 
 
 
@@ -40,7 +40,7 @@
 
 
 
-    "severity": "wishlist", 
+    "severity": "minor", 
 
 
 
@@ -54,14 +54,14 @@
 
 
 
-    "summary": "Replace optparse with docopt", 
+    "summary": "Add completion support", 
 
 
 
 
 
 
-    "time": "Mon, 25 Sep 2017 19:43:33 +0000"
+    "time": "Tue, 03 Oct 2017 18:04:05 +0000"
 
 
 
