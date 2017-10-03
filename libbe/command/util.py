@@ -104,7 +104,10 @@ def complete_bug_id(command, argument, fragment='/'):
 def complete_bug_comment_id(command, _, fragment=None, comments=True):
     import libbe.bugdir
     bugdirs = command._get_bugdirs()  # pylint: disable=protected-access
-    p, matches, root = _data(bugdirs, fragment)
+    if not fragment:
+        fragment = '/'
+    matches = None
+    p, common, root = _data(bugdirs, fragment)
 
     bug = None
     if p is None:
