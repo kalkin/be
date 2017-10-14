@@ -68,6 +68,7 @@ setup(
         },
     data_files=data_files,
     requires=[
+        'docopt',
         'Jinja2 (>=2.6)',
         'CherryPy (>=3.2)',
         'semver'
