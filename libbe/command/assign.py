@@ -21,9 +21,28 @@
 # You should have received a copy of the GNU General Public License along with
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
+""" Bugs Everywhere - Assign an idividual or group to fix a bug
+
+Usage:
+    be assign ASSIGNEE BUG-ID...
+    be assign -h | --help
+
+Arguments:
+    ASSIGNEE    Assign a person to fix a bug.
+    BUG-ID      A bug id i.e. /abc
+
+Options:
+    -h, --help  Show this screen.
+
+Assigneds should be the person's Bugs Everywhere identity,
+the same string that appears in Creator fields.
+"""
+
+from docopt import docopt
+
 import libbe
 import libbe.command
-import libbe.command.util
+from libbe.command.util import bugdir_bug_comment_from_user_id
 
 
 class Assign (libbe.command.Command):
@@ -38,22 +57,24 @@ class Assign (libbe.command.Command):
     >>> ui.storage_callbacks.set_storage(bd.storage)
     >>> cmd = Assign(ui=ui)
 
+    >>> ui.setup_command(cmd)
+
     >>> bd.bug_from_uuid('a').assigned is None
     True
     >>> ui._user_id = u'Fran\xe7ois'
-    >>> ret = ui.run(cmd, args=['-', '/a'])
+    >>> ret = cmd.run(['-', '/a'])
     >>> bd.flush_reload()
     >>> bd.bug_from_uuid('a').assigned
     u'Fran\\xe7ois'
 
-    >>> ret = ui.run(cmd, args=['someone', '/a', '/b'])
+    >>> ret = cmd.run(['someone', '/a', '/b'])
     >>> bd.flush_reload()
     >>> bd.bug_from_uuid('a').assigned
     u'someone'
     >>> bd.bug_from_uuid('b').assigned
     u'someone'
 
-    >>> ret = ui.run(cmd, args=['none', '/a'])
+    >>> ret = cmd.run(['none', '/a'])
     >>> bd.flush_reload()
     >>> bd.bug_from_uuid('a').assigned is None
     True
@@ -62,48 +83,19 @@ class Assign (libbe.command.Command):
     """
     name = 'assign'
 
-    def __init__(self, *args, **kwargs):
-        libbe.command.Command.__init__(self, *args, **kwargs)
-        self.args.extend([
-                libbe.command.Argument(
-                    name='assigned', metavar='ASSIGNED', default=None,
-                    completion_callback=libbe.command.util.complete_assigned),
-                libbe.command.Argument(
-                    name='bug-id', metavar='BUG-ID', default=None,
-                    repeatable=True,
-                    completion_callback=libbe.command.util.complete_bug_id),
-                ])
-
-    def _run(self, **params):
-        assigned = parse_assigned(self, params['assigned'])
+    def run(self, args=None):
+        args = args or []
+        params = docopt(__doc__, argv=[Assign.name] + args)
+        assigned = params['ASSIGNEE']
+        if assigned == 'none':
+            assigned = None
+        elif assigned == '-':
+            assigned = self._get_user_id()
         bugdirs = self._get_bugdirs()
-        for bug_id in params['bug-id']:
-            bugdir,bug,comment = (
-                libbe.command.util.bugdir_bug_comment_from_user_id(
-                    bugdirs, bug_id))
+        for bug_id in params['BUG-ID']:
+            _, bug, __ = (bugdir_bug_comment_from_user_id(bugdirs, bug_id))
             if bug.assigned != assigned:
                 bug.assigned = assigned
                 if bug.status == 'open':
                     bug.status = 'assigned'
         return 0
-
-    def _long_help(self):
-        return """
-Assign a person to fix a bug.
-
-Assigneds should be the person's Bugs Everywhere identity, the same
-string that appears in Creator fields.
-
-Special assigned strings:
-  "-"      assign the bug to yourself
-  "none"   un-assigns the bug
-"""
-
-def parse_assigned(command, assigned):
-    """Standard processing for the 'assigned' Argument.
-    """
-    if assigned == 'none':
-        assigned = None
-    elif assigned == '-':
-        assigned = command._get_user_id()
-    return assigned
