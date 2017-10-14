@@ -251,19 +251,6 @@ class OptionFormatter (optparse.IndentedHelpFormatter):
         return ''.join(ret[:-1])
 
 class Command (object):
-    """One-line command description here.
-
-    >>> c = Command()
-    >>> print c.help()
-    usage: be command [options]
-    <BLANKLINE>
-    Options:
-      -h, --help  Print a help message.
-    <BLANKLINE>
-      --complete  Print a list of possible completions.
-    <BLANKLINE>
-    A detailed help message.
-    """
     user_agent = 'BE-HTTP-Command'
 
     name = 'command'
@@ -274,127 +261,18 @@ class Command (object):
         self.status = None
         self.result = None
         self.restrict_file_access = True
-        self.options = [
-            Option(name='help', short_name='h',
-                help='Print a help message.',
-                callback=self.help),
-            Option(name='complete',
-                help='Print a list of possible completions.',
-                callback=self.complete),
-                ]
         self.args = []
 
-    def run(self, options=None, args=None):
-        self.status = 1 # in case we raise an exception
-        params = self._parse_options_args(options, args)
-        if params['help'] == True:
-            pass
-        else:
-            params.pop('help')
-        if params['complete'] != None:
-            pass
-        else:
-            params.pop('complete')
-
-        if self.server:
-            self.status = self._run_remote(**params)
-        else:
-            self.status = self._run(**params)
-        return self.status
-
-    def _parse_options_args(self, options=None, args=None):
-        if options == None:
-            options = {}
-        if args == None:
-            args = []
-        params = {}
-        for option in self.options:
-            assert option.name not in params, params[option.name]
-            if option.name in options:
-                params[option.name] = options.pop(option.name)
-            elif option.arg != None:
-                params[option.name] = option.arg.default
-            else: # non-arg options are flags, set to default flag value
-                params[option.name] = False
-        assert 'user-id' not in params, params['user-id']
-        if 'user-id' in options:
-            self._user_id = options.pop('user-id')
-        if len(options) > 0:
-            raise UserError, 'Invalid option passed to command %s:\n  %s' \
-                % (self.name, '\n  '.join(['%s: %s' % (k,v)
-                                           for k,v in options.items()]))
-        in_optional_args = False
-        for i,arg in enumerate(self.args):
-            if arg.repeatable == True:
-                assert i == len(self.args)-1, arg.name
-            if in_optional_args == True:
-                assert arg.optional == True, arg.name
-            else:
-                in_optional_args = arg.optional
-            if i < len(args):
-                if arg.repeatable == True:
-                    params[arg.name] = [args[i]]
-                else:
-                    params[arg.name] = args[i]
-            else:  # no value given
-                assert in_optional_args == True, arg.name
-                params[arg.name] = arg.default
-        if len(args) > len(self.args):  # add some additional repeats
-            assert self.args[-1].repeatable == True, self.args[-1].name
-            params[self.args[-1].name].extend(args[len(self.args):])
-        return params
-
-    def _run(self, **kwargs):
+    def run(self, args=None):
         raise NotImplementedError
 
     def _run_remote(self, **kwargs):
-        data = libbe.storage.util.mapfile.generate({
-                'command': self.name,
-                'parameters': kwargs,
-                }, context=0)
-        url = urlparse.urljoin(self.server, 'run')
-        page,final_url,info = libbe.util.http.get_post_url(
-            url=url, get=False, data=data, agent=self.user_agent)
-        self.stdout.write(page)
-        return 0
+        raise NotImplementedError
 
     def help(self, *args):
         return '\n\n'.join([self.usage(),
                             self._option_help(),
                             self._long_help().rstrip('\n')])
-
-    def usage(self):
-        usage = 'usage: be %s [options]' % self.name
-        num_optional = 0
-        for arg in self.args:
-            usage += ' '
-            if arg.optional == True:
-                usage += '['
-                num_optional += 1
-            usage += arg.metavar
-            if arg.repeatable == True:
-                usage += ' ...'
-        usage += ']'*num_optional
-        return usage
-
-    def _option_help(self):
-        o = OptionFormatter(self)
-        return o.option_help().strip('\n')
-
-    def _long_help(self):
-        return "A detailed help message."
-
-    def complete(self, argument=None, fragment=None):
-        if argument == None:
-            ret = ['--%s' % o.name for o in self.options
-                    if o.name != 'complete']
-            if len(self.args) > 0 and self.args[0].completion_callback != None:
-                ret.extend(self.args[0].completion_callback(self, argument, fragment))
-            return ret
-        elif argument.completion_callback != None:
-            # finish a particular argument
-            return argument.completion_callback(self, argument, fragment)
-        return [] # the particular argument doesn't supply completion info
 
     def _check_restricted_access(self, storage, path):
         """
@@ -514,7 +392,7 @@ class UnconnectedStorageGetter (object):
 
 class StorageCallbacks (object):
     def __init__(self, location=None):
-        if location == None:
+        if not location:
             location = '.'
         self.location = location
         self._get_unconnected_storage = UnconnectedStorageGetter(location)
@@ -582,12 +460,8 @@ class UserInterface (object):
         self.storage_callbacks = StorageCallbacks(location)
         self.restrict_file_access = True
 
-    def help(self):
-        raise NotImplementedError
-
-    def run(self, command, options=None, args=None):
-        self.setup_command(command)
-        return command.run(options, args)
+    def run(self, args=None):
+        return command.run(args)
 
     def setup_command(self, command):
         if command.ui is None:
