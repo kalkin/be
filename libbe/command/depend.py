@@ -17,6 +17,42 @@
 #
 # You should have received a copy of the GNU General Public License along with
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
+""" Bugs Everywhere - Add/remove bug dependencies.
+
+Usage:
+    be depend PARENT_BUG CHILD_BUG...
+    be depend [-s|--show-status] [-S|--show-summary] [--status=STATUS] [--severity=SEVERITY] [-t INT|--tree-depth=INT] PARENT_BUG
+    be depend (-r|--remove) PARENT_BUG CHILD_BUG...
+    be depend --repair
+    be depend (-h | --help)
+
+Options:
+    -h, --help                  Show this screen.
+    -r, --remove                Remove dependency
+    --repair                    Check for and repair one-way links
+    -S, --show-summary          Show summary of blocking bugs
+    --status=STATUS             Filter by STATUS.   [default: all]
+    --severity=SEVERITY         Filter by SEVERITY. [default: all]
+    -t INT, --tree-depth=INT    Print dependency tree rooted at BUG-ID with
+                                DEPTH levels of both blockers and blockees. Set
+                                DEPTH <= 0 to disable the depth limit.
+
+Arguments:
+    PARENT_BUG                  A bug blocked by one or multiple child bugs.
+    CHILD_BUG                   A bug blocking a parent bug.
+
+Status:
+    %s, all
+
+Severity:
+    %s, all
+
+The "|--" symbol in the repair-mode output is inspired by the
+"negative feedback" arrow common in biochemistry. See, for example
+http://www.nature.com/nature/journal/v456/n7223/images/nature07513-f5.0.jpg
+"""
+
+from docopt import docopt
 
 import libbe
 import libbe.bug
@@ -131,200 +167,148 @@ class BrokenLink(Exception):
 
 
 class Depend(libbe.command.Command):
-    """Add/remove bug dependencies
+    """ 
+        Add/remove bug dependencies
 
-    >>> import sys
-    >>> bd = libbe.bugdir.SimpleBugDir(memory=False)
-    >>> io = libbe.command.StringInputOutput()
-    >>> io.stdout = sys.stdout
-    >>> ui = libbe.command.UserInterface(io=io)
-    >>> ui.storage_callbacks.set_storage(bd.storage)
-    >>> cmd = Depend(ui=ui)
+        >>> import sys
+        >>> bd = libbe.bugdir.SimpleBugDir(memory=False)
+        >>> io = libbe.command.StringInputOutput()
+        >>> io.stdout = sys.stdout
+        >>> ui = libbe.command.UserInterface(io=io)
+        >>> ui.storage_callbacks.set_storage(bd.storage)
+        >>> cmd = Depend(ui=ui)
 
-    >>> ret = ui.run(cmd, args=['/a', '/b'])
-    abc/a blocked by:
-    abc/b
-    >>> ret = ui.run(cmd, args=['/a'])
-    abc/a blocked by:
-    abc/b
-    >>> ret = ui.run(cmd, {'show-status':True}, ['/a']) # doctest: +NORMALIZE_WHITESPACE
-    abc/a blocked by:
-    abc/b closed
-    >>> ret = ui.run(cmd, args=['/b', '/a'])
-    abc/b blocked by:
-    abc/a
-    abc/b blocks:
-    abc/a
-    >>> ret = ui.run(cmd, {'show-status':True}, ['/a']) # doctest: +NORMALIZE_WHITESPACE
-    abc/a blocked by:
-    abc/b closed
-    abc/a blocks:
-    abc/b closed
-    >>> ret = ui.run(cmd, {'show-summary':True}, ['/a']) # doctest: +NORMALIZE_WHITESPACE
-    abc/a blocked by:
-    abc/b       Bug B
-    abc/a blocks:
-    abc/b       Bug B
-    >>> ret = ui.run(cmd, {'repair':True})
-    >>> ret = ui.run(cmd, {'remove':True}, ['/b', '/a'])
-    abc/b blocks:
-    abc/a
-    >>> ret = ui.run(cmd, {'remove':True}, ['/a', '/b'])
-    >>> ui.cleanup()
-    >>> bd.cleanup()
+        >>> ui.setup_command(cmd)
+
+        >>> ret = cmd.run(['/a', '/b'])
+        >>> ret = cmd.run(['/a']) # doctest: +NORMALIZE_WHITESPACE
+        abc/a blocked by:
+        abc/b
+        >>> ret = cmd.run(['/a'])
+        abc/a blocked by:
+        abc/b
+        >>> ret = cmd.run(['--show-status', '/a']) # doctest: +NORMALIZE_WHITESPACE
+        abc/a blocked by:
+        abc/b closed
+        >>> ret = cmd.run(['/b', '/a'])
+        >>> ret = cmd.run(['/b']) # doctest: +NORMALIZE_WHITESPACE
+        abc/b blocked by:
+        abc/a
+        abc/b blocks:
+        abc/a
+        >>> ret = cmd.run(['--show-status', '/a']) # doctest: +NORMALIZE_WHITESPACE
+        abc/a blocked by:
+        abc/b closed
+        abc/a blocks:
+        abc/b closed
+        >>> ret = cmd.run(['--show-summary', '/a']) # doctest: +NORMALIZE_WHITESPACE
+        abc/a blocked by:
+        abc/b       Bug B
+        abc/a blocks:
+        abc/b       Bug B
+        >>> ret = cmd.run(['--repair'])
+        >>> ret = cmd.run(['--remove', '/b', '/a'])
+
+        >>> ret = cmd.run(['--remove', '/a', '/b'])
+        >>> ui.cleanup()
+        >>> bd.cleanup()
     """
+
     name = 'depend'
 
-    def __init__(self, *args, **kwargs):
-        libbe.command.Command.__init__(self, *args, **kwargs)
-        self.options.extend([
-                libbe.command.Option(name='remove', short_name='r',
-                    help='Remove dependency (instead of adding it)'),
-                libbe.command.Option(name='show-status', short_name='s',
-                    help='Show status of blocking bugs'),
-                libbe.command.Option(name='show-summary', short_name='S',
-                    help='Show summary of blocking bugs'),
-                libbe.command.Option(name='status',
-                    help='Only show bugs matching the STATUS specifier',
-                    arg=libbe.command.Argument(
-                        name='status', metavar='STATUS', default=None,
-                        completion_callback=libbe.command.util.complete_status)),
-                libbe.command.Option(name='severity',
-                    help='Only show bugs matching the SEVERITY specifier',
-                    arg=libbe.command.Argument(
-                        name='severity', metavar='SEVERITY', default=None,
-                        completion_callback=libbe.command.util.complete_severity)),
-                libbe.command.Option(name='tree-depth', short_name='t',
-                    help='Print dependency tree rooted at BUG-ID with DEPTH levels of both blockers and blockees.  Set DEPTH <= 0 to disable the depth limit.',
-                    arg=libbe.command.Argument(
-                        name='tree-depth', metavar='INT', type='int',
-                        completion_callback=libbe.command.util.complete_severity)),
-                libbe.command.Option(name='repair',
-                    help='Check for and repair one-way links'),
-                ])
-        self.args.extend([
-                libbe.command.Argument(
-                    name='bug-id', metavar='BUG-ID', default=None,
-                    optional=True,
-                    completion_callback=libbe.command.util.complete_bug_id),
-                libbe.command.Argument(
-                    name='blocking-bug-id', metavar='BUG-ID', default=None,
-                    optional=True,
-                    completion_callback=libbe.command.util.complete_bug_id),
-                ])
-
-    def _run(self, **params):
-        if params['repair'] and params['bug-id'] is not None:
-            raise libbe.command.UserError(
-                'No arguments with --repair calls.')
-        elif not params['repair'] and params['bug-id'] is None:
-            raise libbe.command.UserError(
-                'Must specify either --repair or a BUG-ID')
-
-        if params['tree-depth'] is not None \
-                and params['blocking-bug-id'] is not None:
-            raise libbe.command.UserError(
-                'Only one bug id used in tree mode.')
-
+    def run(self, args=None):
+        args = args or []
+        params = docopt(__doc__ % (', '.join(libbe.bug.status_values),
+                                   ', '.join(libbe.bug.severity_values)),
+                        argv=[Depend.name] + args)
         bugdirs = self._get_bugdirs()
-        if params['repair']:
-            _, fixed, broken = check_dependencies(bugdirs,
-                                                  repair_broken_links=True)
-            assert not broken, broken
-            if fixed:
-                print >> self.stdout, 'Fixed the following links:'
-                print >> self.stdout, \
-                    '\n'.join(['%s |-- %s' %
-                               (blockee.id.user(), blocker.id.user())
-                               for blockee, blocker in fixed])
-            return 0
+        if params['--repair']:
+            return self._repair(bugdirs)
 
-        status = parse_status(params['status'])
-        severity = parse_severity(params['severity'])
-        _filter = Filter(status, severity)
-
-        _, bug_a, dummy_comment = (
-            libbe.command.util.bugdir_bug_comment_from_user_id(
-                bugdirs, params['bug-id']))
-
-        if params['tree-depth'] is not None:
-            dtree = DependencyTree(bugdirs, bug_a, params['tree-depth'],
-                                   _filter)
-            if dtree.blocked_by_tree():
-                print >> self.stdout, '%s blocked by:' % bug_a.id.user()
-                for depth, node in dtree.blocked_by_tree().thread():
-                    if depth == 0:
-                        continue
-                    print >> self.stdout, (
-                        '%s%s'
-                        % (' '*(depth), Depend.bug_string(node.bug, params)))
-            if dtree.blocks_tree():
-                print >> self.stdout, '%s blocks:' % bug_a.id.user()
-                for depth, node in dtree.blocks_tree().thread():
-                    if depth == 0:
-                        continue
-                    print >> self.stdout, (
-                        '%s%s'
-                        % (' '*(depth), Depend.bug_string(node.bug, params)))
-            return 0
-
-        if params['blocking-bug-id'] is not None:
-            bugdirB, bug_b, dummy_comment = (
+        if params['CHILD_BUG']:
+            _, parent_bug, dummy_comment = (
                 libbe.command.util.bugdir_bug_comment_from_user_id(
-                    bugdirs, params['blocking-bug-id']))
-            if params['remove']:
-                remove_block(bug_a, bug_b)
-            else:  # add the dependency
-                add_block(bug_a, bug_b)
+                    bugdirs, params['PARENT_BUG']))
+            for _id in params['CHILD_BUG']:
+                _, child_bug, dummy_comment = (
+                    libbe.command.util.bugdir_bug_comment_from_user_id(
+                        bugdirs, _id))
+                if params['--remove']:
+                    remove_block(parent_bug, child_bug)
+                else:  # add the dependency
+                    add_block(parent_bug, child_bug)
 
-        blocked_by = get_blocked_by(bugdirs, bug_a)
+            return 0
+
+        if params['--tree-depth'] is not None:
+            return self._tree_depth(bugdirs, params)
+
+
+        _, parent_bug, dummy_comment = (
+            libbe.command.util.bugdir_bug_comment_from_user_id(
+                bugdirs, params['PARENT_BUG']))
+        blocked_by = get_blocked_by(bugdirs, parent_bug)
 
         if blocked_by:
-            print >> self.stdout, '%s blocked by:' % bug_a.id.user()
+            print >> self.stdout, '%s blocked by:' % parent_bug.id.user()
             print >> self.stdout, \
                 '\n'.join([Depend.bug_string(_bug, params)
                            for _bug in blocked_by])
-        blocks = get_blocks(bugdirs, bug_a)
+        blocks = get_blocks(bugdirs, parent_bug)
         if blocks:
-            print >> self.stdout, '%s blocks:' % bug_a.id.user()
+            print >> self.stdout, '%s blocks:' % parent_bug.id.user()
             print >> self.stdout, \
                 '\n'.join([Depend.bug_string(_bug, params)
                            for _bug in blocks])
         return 0
 
+    def _tree_depth(self, bugdirs, params):
+        _, parent_bug, dummy_comment = (
+            libbe.command.util.bugdir_bug_comment_from_user_id(
+                bugdirs, params['PARENT_BUG']))
+        status = parse_status(params['--status'])
+        severity = parse_severity(params['--severity'])
+        _filter = Filter(status, severity)
+        depth = params['--tree-depth']
+        dtree = DependencyTree(bugdirs, parent_bug, depth, _filter)
+        if dtree.blocked_by_tree():
+            print >> self.stdout, '%s blocked by:' % parent_bug.id.user()
+            for depth, node in dtree.blocked_by_tree().thread():
+                if depth == 0:
+                    continue
+                print >> self.stdout, (
+                    '%s%s'
+                    % (' '*(depth), Depend.bug_string(node.bug, params)))
+        if dtree.blocks_tree():
+            print >> self.stdout, '%s blocks:' % parent_bug.id.user()
+            for depth, node in dtree.blocks_tree().thread():
+                if depth == 0:
+                    continue
+                print >> self.stdout, (
+                    '%s%s'
+                    % (' '*(depth), Depend.bug_string(node.bug, params)))
+        return 0
+
+    def _repair(self, bugdirs):
+        _, fixed, broken = check_dependencies(bugdirs,
+                                              repair_broken_links=True)
+        assert not broken, broken
+        if fixed:
+            print >> self.stdout, 'Fixed the following links:'
+            print >> self.stdout, \
+                '\n'.join(['%s |-- %s' %
+                           (blockee.id.user(), blocker.id.user())
+                           for blockee, blocker in fixed])
+        return 0
+
     @staticmethod
     def bug_string(_bug, params):
         fields = [_bug.id.user()]
-        if params['show-status']:
+        if params['--show-status']:
             fields.append(_bug.status)
-        if params['show-summary']:
+        if params['--show-summary']:
             fields.append(_bug.summary)
         return '\t'.join(fields)
-
-    def _long_help(self):
-        return """
-Set a dependency with the second bug (B) blocking the first bug (A).
-If bug B is not specified, just print a list of bugs blocking (A).
-
-To search for bugs blocked by a particular bug, try
-  $ be list --extra-strings BLOCKED-BY:<your-bug-uuid>
-
-The --status and --severity options allow you to either blacklist or
-whitelist values, for example
-  $ be list --status open,assigned
-will only follow and print dependencies with open or assigned status.
-You select blacklist mode by starting the list with a minus sign, for
-example
-  $ be list --severity -target
-which will only follow and print dependencies with non-target severity.
-
-If neither bug A nor B is specified, check for and repair the missing
-side of any one-way links.
-
-The "|--" symbol in the repair-mode output is inspired by the
-"negative feedback" arrow common in biochemistry.  See, for example
-  http://www.nature.com/nature/journal/v456/n7223/images/nature07513-f5.0.jpg
-"""
 
 # internal helper functions
 
