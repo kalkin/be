@@ -89,7 +89,7 @@ def main():  # pylint: disable=missing-docstring
     ui.setup_command(command)
 
     if command.name in ['new', 'comment', 'commit', 'html', 'import-xml',
-                        'serve-storage', 'serve-commands', 'web']:
+                        'serve-storage', 'serve-commands']:
         paginate = 'never'
     else:
         paginate = 'auto'
