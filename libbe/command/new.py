@@ -20,138 +20,130 @@
 # You should have received a copy of the GNU General Public License along with
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
+""" Bugs Everywhere - Create a new bug, with a new ID.
+
+Usage:
+    be new [-a ASSIGNEE] [-b ID] [-f] [-c CREATOR] [-r REPORTER] [-s SEVERITY] [-t STATUS] SUMMARY
+
+Options:
+    -a NAME, --assigned=NAME            The developer in charge of the bug
+    -b ID, --bugdir=ID                  Short bugdir UUID for the new bug.  You
+                                        only need to set this if you have
+                                        multiple bugdirs in your repository.
+    -c NAME, --creator=NAME             The user who created the bug
+    -f, --full-uuid                     Print the full UUID for the new bug
+    -r NAME, --reporter=NAME            The user who reported the bug
+    -s SEVERITY, --severity=SEVERITY    The bug's severity
+    -t STATUS, --status=STATUS          The bug's status level
+
+
+The SUMMARY specified on the commandline is a string (only one line) that
+describes the bug briefly or "-", in which case the string will be read from
+stdin.
+"""
+
 import libbe
 import libbe.command
 import libbe.command.util
 
-from .assign import parse_assigned as _parse_assigned
+from docopt import docopt
 
 
-class New (libbe.command.Command):
-    """Create a new bug
+class New(libbe.command.Command):
+    """
+        Create a new bug
 
-    >>> import os
-    >>> import sys
-    >>> import time
-    >>> import libbe.bugdir
-    >>> import libbe.util.id
-    >>> bd = libbe.bugdir.SimpleBugDir(memory=False)
-    >>> io = libbe.command.StringInputOutput()
-    >>> io.stdout = sys.stdout
-    >>> ui = libbe.command.UserInterface(io=io)
-    >>> ui.storage_callbacks.set_storage(bd.storage)
-    >>> cmd = New()
+        >>> import os
+        >>> import sys
+        >>> import time
+        >>> import libbe.bugdir
+        >>> import libbe.util.id
+        >>> bd = libbe.bugdir.SimpleBugDir(memory=False)
+        >>> io = libbe.command.StringInputOutput()
+        >>> io.stdout = sys.stdout
+        >>> ui = libbe.command.UserInterface(io=io)
+        >>> ui.storage_callbacks.set_storage(bd.storage)
+        >>> cmd = New()
 
-    >>> uuid_gen = libbe.util.id.uuid_gen
-    >>> libbe.util.id.uuid_gen = lambda: 'X'
-    >>> ui._user_id = u'Fran\\xe7ois'
-    >>> options = {'assigned': 'none'}
-    >>> ret = ui.run(cmd, options=options, args=['this is a test',])
-    Created bug with ID abc/X
-    >>> libbe.util.id.uuid_gen = uuid_gen
-    >>> bd.flush_reload()
-    >>> bug = bd.bug_from_uuid('X')
-    >>> print bug.summary
-    this is a test
-    >>> bug.creator
-    u'Fran\\xe7ois'
-    >>> bug.reporter
-    u'Fran\\xe7ois'
-    >>> bug.time <= int(time.time())
-    True
-    >>> print bug.severity
-    minor
-    >>> print bug.status
-    open
-    >>> print bug.assigned
-    None
-    >>> ui.cleanup()
-    >>> bd.cleanup()
+        >>> ui.setup_command(cmd)
+
+        >>> uuid_gen = libbe.util.id.uuid_gen
+        >>> libbe.util.id.uuid_gen = lambda: 'X'
+        >>> ui._user_id = u'Fran\\xe7ois'
+        >>> ret = cmd.run(['--assigned=none', 'this is a test',])
+        Created bug with ID abc/X
+        >>> libbe.util.id.uuid_gen = uuid_gen
+        >>> bd.flush_reload()
+        >>> bug = bd.bug_from_uuid('X')
+        >>> print bug.summary
+        this is a test
+        >>> bug.creator
+        u'Fran\\xe7ois'
+        >>> bug.reporter
+        u'Fran\\xe7ois'
+        >>> bug.time <= int(time.time())
+        True
+        >>> print bug.severity
+        minor
+        >>> print bug.status
+        open
+        >>> print bug.assigned
+        None
+        >>> ui.cleanup()
+        >>> bd.cleanup()
     """
     name = 'new'
 
-    def __init__(self, *args, **kwargs):
-        libbe.command.Command.__init__(self, *args, **kwargs)
-        self.options.extend([
-                libbe.command.Option(name='reporter', short_name='r',
-                    help='The user who reported the bug',
-                    arg=libbe.command.Argument(
-                        name='reporter', metavar='NAME')),
-                libbe.command.Option(name='creator', short_name='c',
-                    help='The user who created the bug',
-                    arg=libbe.command.Argument(
-                        name='creator', metavar='NAME')),
-                libbe.command.Option(name='assigned', short_name='a',
-                    help='The developer in charge of the bug',
-                    arg=libbe.command.Argument(
-                        name='assigned', metavar='NAME',
-                        completion_callback=libbe.command.util.complete_assigned)),
-                libbe.command.Option(name='status', short_name='t',
-                    help='The bug\'s status level',
-                    arg=libbe.command.Argument(
-                        name='status', metavar='STATUS',
-                        completion_callback=libbe.command.util.complete_status)),
-                libbe.command.Option(name='severity', short_name='s',
-                    help='The bug\'s severity',
-                    arg=libbe.command.Argument(
-                        name='severity', metavar='SEVERITY',
-                        completion_callback=libbe.command.util.complete_severity)),
-                libbe.command.Option(name='bugdir', short_name='b',
-                    help='Short bugdir UUID for the new bug.  You '
-                    'only need to set this if you have multiple bugdirs in '
-                    'your repository.',
-                    arg=libbe.command.Argument(
-                        name='bugdir', metavar='ID', default=None,
-                        completion_callback=libbe.command.util.complete_bugdir_id)),
-                libbe.command.Option(name='full-uuid', short_name='f',
-                    help='Print the full UUID for the new bug')
-                ])
-        self.args.extend([
-                libbe.command.Argument(name='summary', metavar='SUMMARY')
-                ])
-
-    def _run(self, **params):
-        if params['summary'] == '-': # read summary from stdin
+    def run(self, args=None):
+        # pylint: disable=too-many-branches
+        args = args or []
+        params = docopt(__doc__, argv=[New.name] + args)
+        if params['SUMMARY'] == '-':  # read summary from stdin
+            # pylint: disable=no-member
             summary = self.stdin.readline()
         else:
-            summary = params['summary']
-        storage = self._get_storage()
-        bugdirs = self._get_bugdirs()
-        if params['bugdir']:
-            bugdir = bugdirs[params['bugdir']]
+            summary = params['SUMMARY']
+        storage = self._get_storage()  # pylint: disable=no-member
+        bugdirs = self._get_bugdirs()  # pylint: disable=no-member
+        if params['--bugdir']:
+            bugdir = bugdirs[params['--bugdir']]
         elif len(bugdirs) == 1:
             bugdir = bugdirs.values()[0]
         else:
-            raise libbe.command.UserError(
-                'Ambiguous bugdir {}'.format(sorted(bugdirs.values())))
+            raise libbe.command.UserError('Ambiguous bugdir %s'
+                                          % sorted(bugdirs.values()))
         storage.writeable = False
         bug = bugdir.new_bug(summary=summary.strip())
-        if params['creator'] != None:
-            bug.creator = params['creator']
+        if params['--creator'] is not None:
+            bug.creator = params['--creator']
         else:
-            bug.creator = self._get_user_id()
-        if params['reporter'] != None:
-            bug.reporter = params['reporter']
+            bug.creator = self._get_user_id()  # pylint: disable=no-member
+        if params['--reporter'] is not None:
+            bug.reporter = params['--reporter']
         else:
             bug.reporter = bug.creator
-        if params['assigned'] != None:
-            bug.assigned = _parse_assigned(self, params['assigned'])
-        if params['status'] != None:
-            bug.status = params['status']
-        if params['severity'] != None:
-            bug.severity = params['severity']
+        if params['--assigned'] is not None:
+            bug.assigned = parse_assigned(self, params['--assigned'])
+        if params['--status'] is not None:
+            bug.status = params['--status']
+        if params['--severity'] is not None:
+            bug.severity = params['--severity']
         storage.writeable = True
         bug.save()
-        if params['full-uuid']:
+        if params['--full-uuid']:
             bug_id = bug.id.long_user()
         else:
             bug_id = bug.id.user()
+        # pylint: disable=no-member
         self.stdout.write('Created bug with ID %s\n' % (bug_id))
         return 0
 
-    def _long_help(self):
-        return """
-Create a new bug, with a new ID.  The summary specified on the
-commandline is a string (only one line) that describes the bug briefly
-or "-", in which case the string will be read from stdin.
-"""
+
+def parse_assigned(command, assigned):
+    """Standard processing for the 'assigned' Argument.
+    """
+    if assigned == 'none':
+        assigned = None
+    elif assigned == '-':
+        assigned = command._get_user_id()  # pylint: disable=protected-access
+    return assigned
