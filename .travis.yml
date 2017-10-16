@@ -6,7 +6,7 @@ before_install:
     - sudo apt-get install mercurial darcs bzr
 
 install:
-  - sudo pip install cherrypy jinja2 scrutinizer-ocular semver
+  - sudo pip install cherrypy jinja2 scrutinizer-ocular semver docopt
 
 before_script:
   - echo "[ui]" > $HOME/.hgrc
