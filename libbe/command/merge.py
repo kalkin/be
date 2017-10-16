@@ -17,16 +17,27 @@
 # You should have received a copy of the GNU General Public License along with
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
+""" Bugs Everywhere - Merge bugs.
+
+Usage:
+    be merge BUG_A BUG_B
+
+ The second bug (B) is merged into the first (A).  This adds merge comments to
+ both bugs, closes B, and appends B's comment tree to A's merge comment.
+"""
+
 import copy
-import os
+
+from docopt import docopt
 
 import libbe
 import libbe.command
 import libbe.command.util
 
 
-class Merge (libbe.command.Command):
-    """Merge duplicate bugs
+class Merge(libbe.command.Command):
+    """
+        Merge duplicate bugs
 
     >>> import sys
     >>> import libbe.bugdir
@@ -37,6 +48,8 @@ class Merge (libbe.command.Command):
     >>> ui = libbe.command.UserInterface(io=io)
     >>> ui.storage_callbacks.set_storage(bd.storage)
     >>> cmd = Merge(ui=ui)
+
+    >>> ui.setup_command(cmd)
 
     >>> a = bd.bug_from_uuid('a')
     >>> a.comment_root.time = 0
@@ -52,7 +65,7 @@ class Merge (libbe.command.Command):
     >>> dummy = dummy.new_reply('1 2 3 4')
     >>> dummy.time = 2
 
-    >>> ret = ui.run(cmd, args=['/a', '/b'])
+    >>> ret = cmd.run(['/a', '/b'])
     Merged bugs #abc/a# and #abc/b#
     >>> bd.flush_reload()
     >>> a = bd.bug_from_uuid('a')
@@ -144,51 +157,37 @@ class Merge (libbe.command.Command):
     """
     name = 'merge'
 
-    def __init__(self, *args, **kwargs):
-        libbe.command.Command.__init__(self, *args, **kwargs)
-        self.args.extend([
-                libbe.command.Argument(
-                    name='bug-id', metavar='BUG-ID', default=None,
-                    completion_callback=libbe.command.util.complete_bug_id),
-                libbe.command.Argument(
-                    name='bug-id-to-merge', metavar='BUG-ID', default=None,
-                    completion_callback=libbe.command.util.complete_bug_id),
-                ])
-
-    def _run(self, **params):
-        storage = self._get_storage()
-        bugdirs = self._get_bugdirs()
-        bugdirA,bugA,comment = (
+    def run(self, args=None):
+        args = args or []
+        params = docopt(__doc__, argv=[Merge.name] + args)
+        storage = self._get_storage()  # pylint: disable=no-member
+        bugdirs = self._get_bugdirs()  # pylint: disable=no-member
+        _, bug_a, comment = (
             libbe.command.util.bugdir_bug_comment_from_user_id(
-                bugdirs, params['bug-id']))
-        bugA.load_comments()
-        bugdirB,bugB,dummy_comment = (
+                bugdirs, params['BUG_A']))
+        bug_a.load_comments()
+        _, bug_b, dummy_comment = (
             libbe.command.util.bugdir_bug_comment_from_user_id(
-                bugdirs, params['bug-id-to-merge']))
-        bugB.load_comments()
-        mergeA = bugA.new_comment('Merged from bug #%s#' % bugB.id.long_user())
-        newCommTree = copy.deepcopy(bugB.comment_root)
-        for comment in newCommTree.traverse(): # all descendant comments
-            comment.bug = bugA
+                bugdirs, params['BUG_B']))
+        bug_b.load_comments()
+        merge_a = bug_a.new_comment('Merged from bug #%s#'
+                                    % bug_b.id.long_user())
+        new_comm_tree = copy.deepcopy(bug_b.comment_root)
+        for comment in new_comm_tree.traverse():  # all descendant comments
+            comment.bug = bug_a
             # uuids must be unique in storage
-            if comment.alt_id == None:
+            if comment.alt_id is None:
                 comment.storage = None
                 comment.alt_id = comment.uuid
                 comment.storage = storage
             comment.uuid = libbe.util.id.uuid_gen()
-            comment.save() # force onto disk under bugA
+            comment.save()  # force onto disk under bug_a
 
-        for comment in newCommTree: # just the child comments
-            mergeA.add_reply(comment, allow_time_inversion=True)
-        bugB.new_comment('Merged into bug #%s#' % bugA.id.long_user())
-        bugB.status = 'closed'
+        for comment in new_comm_tree:  # just the child comments
+            merge_a.add_reply(comment, allow_time_inversion=True)
+        bug_b.new_comment('Merged into bug #%s#' % bug_a.id.long_user())
+        bug_b.status = 'closed'
+        # pylint: disable=no-member
         print >> self.stdout, 'Merged bugs #%s# and #%s#' \
-            % (bugA.id.user(), bugB.id.user())
+            % (bug_a.id.user(), bug_b.id.user())
         return 0
-
-    def _long_help(self):
-        return """
-The second bug (B) is merged into the first (A).  This adds merge
-comments to both bugs, closes B, and appends B's comment tree to A's
-merge comment.
-"""
