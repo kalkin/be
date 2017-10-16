@@ -20,8 +20,79 @@
 # You should have received a copy of the GNU General Public License along with
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
+""" Bugs Everywhere - Show/Set bug directory settings
+
+Usage:
+    be set [-b DIR] [SETTING [VALUE]]
+
+Options:
+   -b ID, --bugdir=ID  Short bugdir UUID to act on.  You only need to set this
+                       if you have multiple bugdirs in your repository.
+
+
+ If name and value are supplied, the name is set to a new value.
+ If no value is specified, the current value is printed.
+ If no arguments are provided, all names and values are listed.
+
+ To unset a setting, set it to "none".
+
+ Allowed settings are:
+
+ %s
+
+ active_status
+   The allowed active bug states and their descriptions.  This property
+   defaults to None.
+ extra_strings
+   Space for an array of extra strings.  Useful for storing state for
+   functionality implemented purely in becommands/<some_function>.py.
+   This property defaults to [].  This property is checked with
+   <function _extra_strings_check_fn at 0x7473402a5668>.
+ inactive_status
+   The allowed inactive bug states and their descriptions.  This
+   property defaults to None.
+ severities
+   The allowed bug severities and their descriptions.  This property
+   defaults to None.
+ target
+   The current project development target.  This property defaults to
+   None.
+
+ Note that this command does not provide a good interface for some of
+ these settings (yet!).  You may need to edit the bugdir settings file
+ (`.be/<bugdir>/settings`) manually.  Examples for each troublesome
+ setting are given below.
+
+ Add the following lines to override the default severities and use
+ your own:
+
+   severities:
+     - - target
+       - The issue is a target or milestone, not a bug.
+     - - wishlist
+       - A feature that could improve usefulness, but not a bug.
+
+ You may add as many name/description pairs as you wish to have; they
+ are sorted in order from least important at the top, to most important
+ at the bottom.  The target severity gets special handling by `be
+ target`.
+
+ Note that the values here _override_ the defaults. That means that if
+ you like the defaults, and wish to keep them, you will have to copy
+ them here before adding any of your own.  See `be severity --help` for
+ the current list.
+
+ Add the following lines to override the default statuses and use your
+ own:
+
+   active_status:
+     - - unconfirmed
+       - A possible bug which lacks independent existence confirmation.
+"""
 
 import textwrap
+
+from docopt import docopt
 
 import libbe
 import libbe.bugdir
@@ -30,7 +101,7 @@ import libbe.command.util
 from libbe.storage.util.settings_object import EMPTY
 
 
-class Set (libbe.command.Command):
+class Set(libbe.command.Command):
     """Change bug directory settings
 
     >>> import sys
@@ -42,170 +113,89 @@ class Set (libbe.command.Command):
     >>> ui.storage_callbacks.set_storage(bd.storage)
     >>> cmd = Set(ui=ui)
 
-    >>> ret = ui.run(cmd, args=['target'])
+    >>> ui.setup_command(cmd)
+
+    >>> ret = cmd.run(['target'])
     None
-    >>> ret = ui.run(cmd, args=['target', 'abcdefg'])
-    >>> ret = ui.run(cmd, args=['target'])
+    >>> ret = cmd.run(['target', 'abcdefg'])
+    >>> ret = cmd.run(['target'])
     abcdefg
-    >>> ret = ui.run(cmd, args=['target', 'none'])
-    >>> ret = ui.run(cmd, args=['target'])
+    >>> ret = cmd.run(['target', 'none'])
+    >>> ret = cmd.run(['target'])
     None
     >>> ui.cleanup()
     >>> bd.cleanup()
     """
     name = 'set'
 
-    def __init__(self, *args, **kwargs):
-        libbe.command.Command.__init__(self, *args, **kwargs)
-        self.options.extend([
-                libbe.command.Option(name='bugdir', short_name='b',
-                    help='Short bugdir UUID to act on.  You '
-                    'only need to set this if you have multiple bugdirs in '
-                    'your repository.',
-                    arg=libbe.command.Argument(
-                        name='bugdir', metavar='ID', default=None,
-                        completion_callback=libbe.command.util.complete_bugdir_id)),
-                ])
-        self.args.extend([
-                libbe.command.Argument(
-                    name='setting', metavar='SETTING', optional=True,
-                    completion_callback=complete_bugdir_settings),
-                libbe.command.Argument(
-                    name='value', metavar='VALUE', optional=True)
-                ])
-
-    def _run(self, **params):
-        bugdirs = self._get_bugdirs()
-        if params['bugdir']:
-            bugdir = bugdirs[params['bugdir']]
+    def run(self, args=None):
+        args = args or []
+        params = docopt(__doc__ % ('\n'.join(get_bugdir_settings())),
+                        argv=[Set.name] + args)
+        bugdirs = self._get_bugdirs()  # pylint: disable=no-member
+        if params['--bugdir']:
+            bugdir = bugdirs[params['--bugdir']]
         elif len(bugdirs) == 1:
             bugdir = bugdirs.values()[0]
         else:
             raise libbe.command.UserError(
                 'Ambiguous bugdir {}'.format(sorted(bugdirs.values())))
-        if params['setting'] == None:
+        if params['SETTING'] is None:
             keys = bugdir.settings_properties
             keys.sort()
             for key in keys:
+                # pylint: disable=no-member
                 print >> self.stdout, \
                     '%16s: %s' % (key, _value_string(bugdir, key))
             return 0
-        if params['setting'] not in bugdir.settings_properties:
-            msg = 'Invalid setting %s\n' % params['setting']
+        if params['SETTING'] not in bugdir.settings_properties:
+            msg = 'Invalid setting %s\n' % params['SETTING']
             msg += 'Allowed settings:\n  '
             msg += '\n  '.join(bugdir.settings_properties)
             raise libbe.command.UserError(msg)
-        if params['value'] == None:
-            print _value_string(bugdir, params['setting'])
+        if params['VALUE'] is None:
+            print _value_string(bugdir, params['SETTING'])
         else:
-            if params['value'] == 'none':
-                params['value'] = EMPTY
-            old_setting = bugdir.settings.get(params['setting'])
-            attr = bugdir._setting_name_to_attr_name(params['setting'])
-            setattr(bugdir, attr, params['value'])
+            if params['VALUE'] == 'none':
+                params['VALUE'] = EMPTY
+            # pylint: disable=protected-access
+            attr = bugdir._setting_name_to_attr_name(params['SETTING'])
+            setattr(bugdir, attr, params['VALUE'])
         return 0
 
-    def _long_help(self):
-        return """
-Show or change per-tree settings.
 
-If name and value are supplied, the name is set to a new value.
-If no value is specified, the current value is printed.
-If no arguments are provided, all names and values are listed.
-
-To unset a setting, set it to "none".
-
-Allowed settings are:
-
-%s
-
-Note that this command does not provide a good interface for some of
-these settings (yet!).  You may need to edit the bugdir settings file
-(`.be/<bugdir>/settings`) manually.  Examples for each troublesome
-setting are given below.
-
-Add the following lines to override the default severities and use
-your own:
-
-  severities:
-    - - target
-      - The issue is a target or milestone, not a bug.
-    - - wishlist
-      - A feature that could improve usefulness, but not a bug.
-
-You may add as many name/description pairs as you wish to have; they
-are sorted in order from least important at the top, to most important
-at the bottom.  The target severity gets special handling by `be
-target`.
-
-Note that the values here _override_ the defaults. That means that if
-you like the defaults, and wish to keep them, you will have to copy
-them here before adding any of your own.  See `be severity --help` for
-the current list.
-
-Add the following lines to override the default statuses and use your
-own:
-
-  active_status:
-    - - unconfirmed
-      - A possible bug which lacks independent existence confirmation.
-    - - open
-      - A working bug that has not been assigned to a developer.
-
-  inactive_status:
-    - - closed
-      - The bug is no longer relevant.
-    - - fixed
-      - The bug should no longer occur.
-
-You may add as many name/description pairs as you wish to have; they
-are sorted in order from most important at the top, to least important
-at the bottom.
-
-Note that the values here _override_ the defaults. That means that if
-you like the defaults, and wish to keep them, you will have to copy
-them here before adding any of your own.  See `be status --help` for
-the current list.
-""" % ('\n'.join(get_bugdir_settings()),)
-
-def get_bugdir_settings():
+def get_bugdir_settings():  # pylint: disable=missing-docstring
     settings = []
-    for s in libbe.bugdir.BugDir.settings_properties:
-        settings.append(s)
+    for setting in libbe.bugdir.BugDir.settings_properties:
+        settings.append(setting)
     settings.sort()
     documented_settings = []
-    for s in settings:
-        set = getattr(libbe.bugdir.BugDir, s)
-        dstr = set.__doc__.strip()
+    for setting in settings:
+        _set = getattr(libbe.bugdir.BugDir, setting)
+        dstr = _set.__doc__.strip()
         # per-setting comment adjustments
-        if s == 'vcs_name':
+        if setting == 'vcs_name':
             lines = dstr.split('\n')
-            while lines[0].startswith('This property defaults to') == False:
+            while not lines[0].startswith('This property defaults to'):
                 lines.pop(0)
-            assert len(lines) != None, \
+            assert len(lines) is not None, \
                 'Unexpected vcs_name docstring:\n  "%s"' % dstr
             lines.insert(
                 0, 'The name of the revision control system to use.\n')
             dstr = '\n'.join(lines)
         doc = textwrap.wrap(dstr, width=70, initial_indent='  ',
                             subsequent_indent='  ')
-        documented_settings.append('%s\n%s' % (s, '\n'.join(doc)))
+        documented_settings.append('%s\n%s' % (setting, '\n'.join(doc)))
     return documented_settings
+
 
 def _value_string(bugdir, setting):
     val = bugdir.settings.get(setting, EMPTY)
     if val == EMPTY:
+        # pylint: disable=protected-access
         default = getattr(bugdir, bugdir._setting_name_to_attr_name(setting))
         if default not in [None, EMPTY]:
             val = 'None (%s)' % default
         else:
             val = None
     return str(val)
-
-def complete_bugdir_settings(command, argument, fragment=None):
-    """
-    List possible command completions for fragment.
-
-    Neither the command nor argument arguments are used.
-    """
-    return libbe.bugdir.BugDir.settings_properties
