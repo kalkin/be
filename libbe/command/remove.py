@@ -20,12 +20,25 @@
 # You should have received a copy of the GNU General Public License along with
 # Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
+""" Bugs Everywhere - Remove (delete) existing bugs.
+
+Usage:
+    be remove BUG_ID...
+
+Use with caution: if you're not using a revision control
+system, there may be no way to recover the lost information.
+You should use this command, for example, to get rid of
+blank or otherwise mangled bugs.
+"""
+
+from docopt import docopt
+
 import libbe
 import libbe.command
 import libbe.command.util
 
 
-class Remove (libbe.command.Command):
+class Remove(libbe.command.Command):
     """Remove (delete) a bug and its comments
 
     >>> import sys
@@ -37,9 +50,11 @@ class Remove (libbe.command.Command):
     >>> ui.storage_callbacks.set_storage(bd.storage)
     >>> cmd = Remove(ui=ui)
 
+    >>> ui.setup_command(cmd)
+
     >>> print bd.bug_from_uuid('b').status
     closed
-    >>> ret = ui.run(cmd, args=['/b'])
+    >>> ret = cmd.run(['/b'])
     Removed bug abc/b
     >>> bd.flush_reload()
     >>> try:
@@ -52,34 +67,20 @@ class Remove (libbe.command.Command):
     """
     name = 'remove'
 
-    def __init__(self, *args, **kwargs):
-        libbe.command.Command.__init__(self, *args, **kwargs)
-        self.args.extend([
-                libbe.command.Argument(
-                    name='bug-id', metavar='BUG-ID', default=None,
-                    repeatable=True,
-                    completion_callback=libbe.command.util.complete_bug_id),
-                ])
-
-    def _run(self, **params):
-        bugdirs = self._get_bugdirs()
+    def run(self, args=None):
+        args = args or []
+        params = docopt(__doc__, argv=[Remove.name] + args)
+        bugdirs = self._get_bugdirs()  # pylint: disable=no-member
         user_ids = []
-        for bug_id in params['bug-id']:
-            bugdir,bug,comment = (
+        for bug_id in params['BUG_ID']:
+            bugdir, bug, _ = (
                 libbe.command.util.bugdir_bug_comment_from_user_id(
                     bugdirs, bug_id))
             user_ids.append(bug.id.user())
             bugdir.remove_bug(bug)
+        # pylint: disable=no-member
         if len(user_ids) == 1:
             print >> self.stdout, 'Removed bug %s' % user_ids[0]
         else:
             print >> self.stdout, 'Removed bugs %s' % ', '.join(user_ids)
         return 0
-
-    def _long_help(self):
-        return """
-Remove (delete) existing bugs.  Use with caution: if you're not using
-a revision control system, there may be no way to recover the lost
-information.  You should use this command, for example, to get rid of
-blank or otherwise mangled bugs.
-"""
