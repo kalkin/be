@@ -137,29 +137,6 @@ def make_html_docs(docdir):
     status,stdout,stderr = invoke(
         ['make', 'SPHINXBUILD=sphinx-build-2.7', 'dirhtml'], cwd=docdir)
 
-def create_tarball(tag):
-    release_name='be-%s' % tag
-    export_dir = release_name
-    export(export_dir)
-    make_version()
-    remove_makefile_libbe_version_dependencies(
-        os.path.join(export_dir, 'Makefile'))
-    print 'copy libbe/_version.py to %s/libbe/_version.py' % export_dir
-    shutil.copy(os.path.join('libbe', '_version.py'),
-                os.path.join(export_dir, 'libbe', '_version.py'))
-    make_changelog(os.path.join(export_dir, 'ChangeLog'), tag)
-    make_id_cache()
-    make_html_docs(os.path.join(export_dir, 'doc'))
-    print 'copy .be/id-cache to %s/.be/id-cache' % export_dir
-    shutil.copy(os.path.join('.be', 'id-cache'),
-                os.path.join(export_dir, '.be', 'id-cache'))
-    set_vcs_name(os.path.join(export_dir, '.be'))
-    tarball_file = '%s.tar.gz' % release_name
-    print 'create tarball', tarball_file
-    invoke(['tar', '-czf', tarball_file, export_dir])
-    print 'remove', export_dir
-    shutil.rmtree(export_dir)
-
 def test():
     import doctest
     doctest.testmod() 
@@ -197,7 +174,6 @@ If you don't like what got committed, you can undo the release with
     status,stdout,stderr = invoke('update-copyright.py',)
     commit("Bumped to version %s" % _tag)
     tag(_tag)
-    create_tarball(_tag)
 
 
 if __name__ == '__main__':
