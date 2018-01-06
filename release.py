@@ -128,7 +128,7 @@ def set_vcs_name(be_dir, vcs_name='None'):
 def make_id_cache():
     """Generate .be/id-cache so users won't need to.
     """
-    invoke([sys.executable, './be', 'list'])
+    invoke(['be', 'list'])
 
 def make_html_docs(docdir):
     """Generate docs so users won't need to install Sphinx, etc.
@@ -194,14 +194,7 @@ If you don't like what got committed, you can undo the release with
     set_release_version(_tag)
     print "Update copyright information..."
     env = dict(os.environ)
-    pythonpath = os.path.abspath('update-copyright')
-    if 'PYTHONPATH' in env:
-        env['PYTHONPATH'] = '{}:{}'.format(pythonpath, env['PYTHONPATH'])
-    else:
-        env['PYTHONPATH'] = pythonpath
-    status,stdout,stderr = invoke([
-            os.path.join('update-copyright', 'bin', 'update-copyright.py')],
-            env=env)
+    status,stdout,stderr = invoke('update-copyright.py',)
     commit("Bumped to version %s" % _tag)
     tag(_tag)
     create_tarball(_tag)
