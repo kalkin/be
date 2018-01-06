@@ -1,7 +1,7 @@
 Oktober 10, 2017
  * Drop support for arch
  * Drop support for monotone
- * Drop support for upgrading from directiory versions before 1.5
+ * Drop support for upgrading from directory versions before 1.5
  * Use $PAGER for most commands
  * Use $PAGER only if needed
 
