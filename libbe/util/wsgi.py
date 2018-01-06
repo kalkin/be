@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2012 Chris Ball <cjb@laptop.org>
+# Copyright (C) 2010-2013 Chris Ball <cjb@laptop.org>
 #                         W. Trevor King <wking@tremily.us>
 #
 # This file is part of Bugs Everywhere.

@@ -1,8 +1,9 @@
-# Copyright (C) 2005-2012 Aaron Bentley <abentley@panoramicfeedback.com>
+# Copyright (C) 2005-2017 Aaron Bentley <abentley@panoramicfeedback.com>
 #                         Alexander Belchenko <bialix@ukr.net>
 #                         Ben Finney <benf@cybersource.com.au>
 #                         Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
+#                         Kalkin <bahtiar@gadimov.de>
 #                         W. Trevor King <wking@tremily.us>
 #
 # This file is part of Bugs Everywhere.

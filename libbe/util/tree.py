@@ -1,6 +1,7 @@
 # Bugs Everywhere, a distributed bugtracker
-# Copyright (C) 2008-2012 Chris Ball <cjb@laptop.org>
+# Copyright (C) 2008-2017 Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
+#                         Kalkin <bahtiar@gadimov.de>
 #                         W. Trevor King <wking@tremily.us>
 #
 # This file is part of Bugs Everywhere.

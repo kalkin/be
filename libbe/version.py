@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-# Copyright (C) 2009-2012 Chris Ball <cjb@laptop.org>
+# Copyright (C) 2009-2017 Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
+#                         Matthew Fernandez <matthew.fernandez@gmail.com>
 #                         W. Trevor King <wking@tremily.us>
 #
 # This file is part of Bugs Everywhere.
@@ -42,7 +43,7 @@ except ImportError as e:
         }
 
 # Manually set a version string (optional, defaults to git revision id)
-#_VERSION = '1.2.3'
+_VERSION = 'v2.0.0-rc2'
 
 def version(verbose=False):
     """

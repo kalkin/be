@@ -1,7 +1,9 @@
-# Copyright (C) 2005-2012 Aaron Bentley <abentley@panoramicfeedback.com>
+# Copyright (C) 2005-2017 Aaron Bentley <abentley@panoramicfeedback.com>
 #                         Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
+#                         Kalkin <bahtiar@gadimov.de>
 #                         Marien Zwart <marien.zwart@gmail.com>
+#                         Matěj Cepl <mcepl@redhat.com>
 #                         Thomas Gerigk <tgerigk@gmx.de>
 #                         W. Trevor King <wking@tremily.us>
 #

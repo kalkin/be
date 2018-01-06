@@ -1,5 +1,6 @@
-# Copyright (C) 2008-2012 Chris Ball <cjb@laptop.org>
+# Copyright (C) 2008-2017 Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
+#                         Kalkin <bahtiar@gadimov.de>
 #                         Niall Douglas (s_sourceforge@nedprod.com) <spam@spamtrap.com>
 #                         Thomas Habets <thomas@habets.pp.se>
 #                         W. Trevor King <wking@tremily.us>

@@ -1,7 +1,8 @@
-# Copyright (C) 2005-2012 Aaron Bentley <abentley@panoramicfeedback.com>
+# Copyright (C) 2005-2017 Aaron Bentley <abentley@panoramicfeedback.com>
 #                         Ben Finney <benf@cybersource.com.au>
 #                         Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
+#                         Kalkin <bahtiar@gadimov.de>
 #                         Marien Zwart <marien.zwart@gmail.com>
 #                         Phil Schumm <philschumm@gmail.com>
 #                         W. Trevor King <wking@tremily.us>

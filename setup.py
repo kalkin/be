@@ -1,6 +1,29 @@
 #!/usr/bin/env python
 #
-# Copyright
+# Copyright (C) 2006-2017 Aaron Bentley <abentley@panoramicfeedback.com>
+#                         Anand Aiyer <aaiyer@gmail.com>
+#                         Gianluca Montecchi <gian@grys.it>
+#                         Jelmer Vernooij <jelmer@samba.org>
+#                         Kalkin <bahtiar@gadimov.de>
+#                         Marien Zwart <marien.zwart@gmail.com>
+#                         Niall Douglas (s_sourceforge@nedprod.com) <spam@spamtrap.com>
+#                         Thomas Levine <occurrence@thomaslevine.com>
+#                         W. Trevor King <wking@tremily.us>
+#
+# This file is part of Bugs Everywhere.
+#
+# Bugs Everywhere is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 2 of the License, or (at your option) any
+# later version.
+#
+# Bugs Everywhere is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# Bugs Everywhere.  If not, see <http://www.gnu.org/licenses/>.
 
 from distutils.core import setup
 import os.path

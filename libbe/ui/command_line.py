@@ -1,4 +1,7 @@
-# Copyright (C) 2009-2012 Chris Ball <cjb@laptop.org>
+# Copyright (C) 2009-2017 Anand Aiyer <aaiyer@gmail.com>
+#                         Chris Ball <cjb@laptop.org>
+#                         Kalkin <bahtiar@gadimov.de>
+#                         Matěj Cepl <mcepl@redhat.com>
 #                         W. Trevor King <wking@tremily.us>
 #
 # This file is part of Bugs Everywhere.

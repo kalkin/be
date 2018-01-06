@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2012 Aaron Bentley <abentley@panoramicfeedback.com>
+# Copyright (C) 2005-2013 Aaron Bentley <abentley@panoramicfeedback.com>
 #                         Chris Ball <cjb@laptop.org>
 #                         W. Trevor King <wking@tremily.us>
 #

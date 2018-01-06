@@ -1,8 +1,8 @@
-# Copyright (C) 2005-2012 Aaron Bentley <abentley@panoramicfeedback.com>
-#                         Andrew Cooper <andrew.cooper@hkcreations.org>
+# Copyright (C) 2005-2016 Aaron Bentley <abentley@panoramicfeedback.com>
+#                         Anand Aiyer <aaiyer@gmail.com>
 #                         Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
-#                         Niall Douglas (s_sourceforge@nedprod.com) <spam@spamtrap.com>
+#                         Oleg Romanyshyn <oromanyshyn@panoramicfeedback.com>
 #                         W. Trevor King <wking@tremily.us>
 #
 # This file is part of Bugs Everywhere.

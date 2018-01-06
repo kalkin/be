@@ -1,7 +1,8 @@
-# Copyright (C) 2005-2012 Aaron Bentley <abentley@panoramicfeedback.com>
+# Copyright (C) 2005-2013 Aaron Bentley <abentley@panoramicfeedback.com>
 #                         Andrew Cooper <andrew.cooper@hkcreations.org>
 #                         Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
+#                         Matěj Cepl <mcepl@redhat.com>
 #                         Niall Douglas (s_sourceforge@nedprod.com) <spam@spamtrap.com>
 #                         W. Trevor King <wking@tremily.us>
 #
