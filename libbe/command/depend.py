@@ -49,13 +49,7 @@ class Filter(object):
         if not self._match_target(bugdirs, bug):
             return False
 
-        if not bug.extra_strings and self.extra_strings_regexps:
-            return False
-
-        if not self._match_extra_strings(bug):
-            return False
-
-        return True
+        return self._match_extra_strings(bug)
 
     def _match_attr(self, bug, attr):
         allowed_attributes = ['status', 'severity', 'assigned']
@@ -85,9 +79,14 @@ class Filter(object):
         if not self.extra_strings_regexps:
             return True
 
-        for string in bug.extra_strings:
+        if bug.extra_strings:
+            for string in bug.extra_strings:
+                for regexp in self.extra_strings_regexps:
+                    if regexp.match(string):
+                        return True
+        else:
             for regexp in self.extra_strings_regexps:
-                if regexp.match(string):
+                if regexp.match(''):
                     return True
 
         return False
