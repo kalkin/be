@@ -71,7 +71,7 @@ introduction to the syntax.
 .. _NumPy/SciPy documentation guide:
   https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 
-.. |build-status| image:: https://img.shields.io/travis/kalkin/be.svg?style=flat
+.. |build-status| image:: https://travis-ci.org/kalkin/be.svg?branch=master
     :alt: build status
     :scale: 100%
     :target: https://travis-ci.org/kalkin/be
