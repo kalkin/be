@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (C) 2009-2017 Anand Aiyer <aaiyer@gmail.com>
 #                         Chris Ball <cjb@laptop.org>
 #                         Kalkin <bahtiar@gadimov.de>

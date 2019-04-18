@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (C) 2009-2017 Chris Ball <cjb@laptop.org>
 #                         Kalkin <bahtiar@gadimov.de>
 #                         Matěj Cepl <mcepl@redhat.com>

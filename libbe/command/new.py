@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (C) 2005-2013 Aaron Bentley <abentley@panoramicfeedback.com>
 #                         Andrew Cooper <andrew.cooper@hkcreations.org>
 #                         Chris Ball <cjb@laptop.org>
