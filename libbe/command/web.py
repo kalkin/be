@@ -1,5 +1,6 @@
-# Copyright (C) 2005-2016 Aaron Bentley <abentley@panoramicfeedback.com>
+# Copyright (C) 2005-2018 Aaron Bentley <abentley@panoramicfeedback.com>
 #                         Anand Aiyer <aaiyer@gmail.com>
+#                         Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
 #                         Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
 #                         Oleg Romanyshyn <oromanyshyn@panoramicfeedback.com>

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
-# Copyright (C) 2005-2017 Aaron Bentley <abentley@panoramicfeedback.com>
+# Copyright (C) 2005-2018 Aaron Bentley <abentley@panoramicfeedback.com>
+#                         Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
 #                         Chris Ball <cjb@laptop.org>
-#                         Kalkin <bahtiar@gadimov.de>
 #                         Marien Zwart <marien.zwart@gmail.com>
 #                         W. Trevor King <wking@tremily.us>
 #

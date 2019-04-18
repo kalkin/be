@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2009-2017 Chris Ball <cjb@laptop.org>
-#                         Kalkin <bahtiar@gadimov.de>
+# Copyright (C) 2009-2019 Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
+#                         Chris Ball <cjb@laptop.org>
 #                         Matěj Cepl <mcepl@redhat.com>
 #                         W. Trevor King <wking@tremily.us>
 #

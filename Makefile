@@ -4,8 +4,9 @@
 # Makefile
 # Part of Bugs Everywhere, a distributed bug tracking system.
 #
-# Copyright (C) 2008-2016 Anand Aiyer <aaiyer@gmail.com>
+# Copyright (C) 2008-2018 Anand Aiyer <aaiyer@gmail.com>
 #                         Anton Batenev <abbat@abbat>
+#                         Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
 #                         Ben Finney <benf@cybersource.com.au>
 #                         Chris Ball <cjb@laptop.org>
 #                         Eric Kow <eric.kow@gmail.com>

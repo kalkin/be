@@ -1,7 +1,7 @@
-# Copyright (C) 2005-2017 Aaron Bentley <abentley@panoramicfeedback.com>
+# Copyright (C) 2005-2018 Aaron Bentley <abentley@panoramicfeedback.com>
+#                         Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
 #                         Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
-#                         Kalkin <bahtiar@gadimov.de>
 #                         Niall Douglas (s_sourceforge@nedprod.com) <spam@spamtrap.com>
 #                         Robert Lehmann <mail@robertlehmann.de>
 #                         W. Trevor King <wking@tremily.us>

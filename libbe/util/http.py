@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2017 Kalkin <bahtiar@gadimov.de>
+# Copyright (C) 2012-2018 Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
 #                         W. Trevor King <wking@tremily.us>
 #
 # This file is part of Bugs Everywhere.

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2005-2013 Aaron Bentley <abentley@panoramicfeedback.com>
+# Copyright (C) 2005-2019 Aaron Bentley <abentley@panoramicfeedback.com>
 #                         Andrew Cooper <andrew.cooper@hkcreations.org>
+#                         Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
 #                         Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
 #                         Matěj Cepl <mcepl@redhat.com>

@@ -1,8 +1,8 @@
-# Copyright (C) 2005-2017 Aaron Bentley <abentley@panoramicfeedback.com>
+# Copyright (C) 2005-2018 Aaron Bentley <abentley@panoramicfeedback.com>
+#                         Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
 #                         Ben Finney <benf@cybersource.com.au>
 #                         Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
-#                         Kalkin <bahtiar@gadimov.de>
 #                         Marien Zwart <marien.zwart@gmail.com>
 #                         Michel Alexandre Salim <salimma@fedoraproject.org>
 #                         W. Trevor King <wking@tremily.us>

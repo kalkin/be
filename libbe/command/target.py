@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2005-2017 Aaron Bentley <abentley@panoramicfeedback.com>
+# Copyright (C) 2005-2019 Aaron Bentley <abentley@panoramicfeedback.com>
+#                         Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
 #                         Chris Ball <cjb@laptop.org>
 #                         Gianluca Montecchi <gian@grys.it>
-#                         Kalkin <bahtiar@gadimov.de>
 #                         Marien Zwart <marien.zwart@gmail.com>
 #                         Matěj Cepl <mcepl@redhat.com>
 #                         Thomas Gerigk <tgerigk@gmx.de>

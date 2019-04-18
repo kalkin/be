@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
-# Copyright (C) 2009-2018 Chris Ball <cjb@laptop.org>
-#                         Kalkin <bahtiar@gadimov.de>
+# Copyright (C) 2009-2018 Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
+#                         Chris Ball <cjb@laptop.org>
 #                         W. Trevor King <wking@tremily.us>
 #
 # This file is part of Bugs Everywhere.

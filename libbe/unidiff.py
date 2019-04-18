@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # The MIT License (MIT)
-# Copyright (C) 2017 Kalkin <bahtiar@gadimov.de>
+# Copyright (C) 2017-2018 Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
 #
 # This file is part of Bugs Everywhere.
 #

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2009-2017 Anand Aiyer <aaiyer@gmail.com>
+# Copyright (C) 2009-2019 Anand Aiyer <aaiyer@gmail.com>
+#                         Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
 #                         Chris Ball <cjb@laptop.org>
-#                         Kalkin <bahtiar@gadimov.de>
 #                         Matěj Cepl <mcepl@redhat.com>
 #                         W. Trevor King <wking@tremily.us>
 #

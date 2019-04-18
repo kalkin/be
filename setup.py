@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2006-2017 Aaron Bentley <abentley@panoramicfeedback.com>
+# Copyright (C) 2006-2018 Aaron Bentley <abentley@panoramicfeedback.com>
 #                         Anand Aiyer <aaiyer@gmail.com>
+#                         Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
 #                         Gianluca Montecchi <gian@grys.it>
 #                         Jelmer Vernooij <jelmer@samba.org>
-#                         Kalkin <bahtiar@gadimov.de>
 #                         Marien Zwart <marien.zwart@gmail.com>
 #                         Niall Douglas (s_sourceforge@nedprod.com) <spam@spamtrap.com>
 #                         Thomas Levine <occurrence@thomaslevine.com>

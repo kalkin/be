@@ -1,5 +1,5 @@
-# Copyright (C) 2009-2017 Chris Ball <cjb@laptop.org>
-#                         Kalkin <bahtiar@gadimov.de>
+# Copyright (C) 2009-2018 Bahtiar `kalkin-` Gadimov <bahtiar@gadimov.de>
+#                         Chris Ball <cjb@laptop.org>
 #                         Valtteri Kokkoniemi <rvk@iki.fi>
 #                         W. Trevor King <wking@tremily.us>
 #
